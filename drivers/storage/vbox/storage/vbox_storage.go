@@ -91,7 +91,8 @@ func (d *driver) Type(ctx types.Context) (types.StorageType, error) {
 // device workflow.
 func (d *driver) NextDeviceInfo(
 	ctx types.Context) (*types.NextDeviceInfo, error) {
-	return nil, nil
+
+	return &types.NextDeviceInfo{Ignore: true}, nil
 }
 
 // InstanceInspect returns an instance.

@@ -102,12 +102,12 @@ func (c *client) updateExecutor(ctx types.Context) error {
 	}
 
 	ctx.Debug("waiting on executor lock")
-	if err := c.lsxMutexWait(); err != nil {
+	if err := c.lsxMutexWait(ctx); err != nil {
 		return err
 	}
 	defer func() {
 		ctx.Debug("signalling executor lock")
-		if err := c.lsxMutexSignal(); err != nil {
+		if err := c.lsxMutexSignal(ctx); err != nil {
 			panic(err)
 		}
 	}()

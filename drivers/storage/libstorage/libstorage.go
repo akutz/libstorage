@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	lsxMutex = types.Run.Join("lsx.lock")
+	lsxMutex = types.NewLockFile(types.Run.Join("lsx.lock"))
 )
 
 func init() {

@@ -28,9 +28,14 @@ func RootDir(config gofig.Config) string {
 	return config.GetString("vfs.root")
 }
 
-// DeviceFilePath returns the path to the VFS devices file.
-func DeviceFilePath(config gofig.Config) string {
+// DevicesDirPath returns the path to the VFS devices directory.
+func DevicesDirPath(config gofig.Config) string {
 	return path.Join(RootDir(config), "dev")
+}
+
+// DevicesFilePath returns the path to the VFS devices file.
+func DevicesFilePath(config gofig.Config) string {
+	return path.Join(RootDir(config), "dev.json")
 }
 
 // VolumesDirPath returns the path to the VFS volumes directory.

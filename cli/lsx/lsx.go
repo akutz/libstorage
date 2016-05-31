@@ -23,7 +23,7 @@ import (
 
 var (
 	cmdRx = regexp.MustCompile(
-		`(?i)^instanceid|nextdevice|localdevices|wait$`)
+		`(?i)^instanceid|nextdevice|localdevices|wait|mapdevice$`)
 )
 
 // Run runs the executor CLI.
@@ -102,7 +102,7 @@ func Run() {
 			result = opResult
 		}
 	} else if cmd == "wait" {
-		if len(args) < 5 {
+		if len(args) < 6 {
 			printUsageAndExit()
 		}
 		op = "wait"
@@ -156,6 +156,16 @@ func Run() {
 			opResult.Driver = driverName
 			result = opResult
 		}
+	} else if cmd == "mapdevice" {
+		if len(args) < 5 {
+			printUsageAndExit()
+		}
+		op = "map device"
+		volumeID := args[3]
+		devicePath := args[4]
+
+		err = d.MapDevice(ctx, volumeID, devicePath, store)
+		result = fmt.Sprintf("%s=%s", volumeID, devicePath)
 	}
 
 	if err != nil {
@@ -229,6 +239,7 @@ func printUsage() {
 
 	printUsageLeftPadded(w, lpad2, "localDevices <scanType>\n")
 	printUsageLeftPadded(w, lpad2, "wait <scanType> <attachToken> <timeout>\n")
+	printUsageLeftPadded(w, lpad2, "mapDevice <volumeID> <devicePath>\n")
 	fmt.Fprintln(w)
 	executorVar := "executor:    "
 	printUsageLeftPadded(w, lpad1, executorVar)

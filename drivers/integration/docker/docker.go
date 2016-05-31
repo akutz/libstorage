@@ -203,14 +203,38 @@ func (d *driver) Mount(
 		ctx.Debug("performing precautionary unmount")
 		_ = client.OS().Unmount(ctx, mp, opts.Opts)
 
-		var token string
-		vol, token, err = client.Storage().VolumeAttach(
-			ctx, vol.ID, &types.VolumeAttachOpts{
+		var (
+			token string
+			opts  = &types.VolumeAttachOpts{
 				Force: opts.Preempt,
 				Opts:  utils.NewStore(),
-			})
+			}
+		)
+
+		nextDevInfo, err := client.Storage().NextDeviceInfo(ctx)
 		if err != nil {
 			return "", nil, err
+		}
+
+		if !nextDevInfo.Ignore {
+			nextDev, err := client.Executor().NextDevice(ctx, opts.Opts)
+			if err != nil {
+				return "", nil, err
+			}
+			opts.NextDevice = &nextDev
+		}
+
+		vol, token, err = client.Storage().VolumeAttach(ctx, vol.ID, opts)
+		if err != nil {
+			return "", nil, err
+		}
+
+		if !nextDevInfo.Ignore {
+			err := client.Executor().MapDevice(
+				ctx, vol.ID, *opts.NextDevice, opts.Opts)
+			if err != nil {
+				return "", nil, err
+			}
 		}
 
 		if token != "" {

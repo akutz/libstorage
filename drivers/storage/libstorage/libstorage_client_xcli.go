@@ -5,7 +5,6 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/akutz/goof"
 	"github.com/akutz/gotil"
@@ -181,6 +180,46 @@ func (c *client) WaitForDevice(
 	return matched, ld, nil
 }
 
+// MapDevice creates a mapping between a volume ID and a device path.
+func (c *client) MapDevice(
+	ctx types.Context,
+	volumeID, devicePath string,
+	opts types.Store) error {
+
+	if c.isController() {
+		return utils.NewUnsupportedForClientTypeError(
+			c.clientType, "MapDevice")
+	}
+
+	ctx = context.RequireTX(ctx.Join(c.ctx))
+
+	serviceName, ok := context.ServiceName(ctx)
+	if !ok {
+		return goof.New("missing service name")
+	}
+
+	si, err := c.getServiceInfo(serviceName)
+	if err != nil {
+		return err
+	}
+	driverName := si.Driver.Name
+
+	exitCode := 0
+	_, err = c.runExecutor(
+		ctx, driverName, types.LSXCmdMapDevice,
+		volumeID, devicePath)
+	if exitError, ok := err.(*exec.ExitError); ok {
+		exitCode = exitError.Sys().(syscall.WaitStatus).ExitStatus()
+	}
+
+	if err != nil && exitCode > 0 {
+		return err
+	}
+
+	ctx.Debug("xli mapdevice success")
+	return nil
+}
+
 func (c *client) runExecutor(
 	ctx types.Context, args ...string) ([]byte, error) {
 
@@ -190,13 +229,13 @@ func (c *client) runExecutor(
 	}
 
 	ctx.Debug("waiting on executor lock")
-	if err := c.lsxMutexWait(); err != nil {
+	if err := c.lsxMutexWait(ctx); err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		ctx.Debug("signalling executor lock")
-		if err := c.lsxMutexSignal(); err != nil {
+		if err := c.lsxMutexSignal(ctx); err != nil {
 			panic(err)
 		}
 	}()
@@ -213,27 +252,23 @@ func (c *client) runExecutor(
 	return cmd.Output()
 }
 
-func (c *client) lsxMutexWait() error {
+func (c *client) lsxMutexWait(ctx types.Context) error {
 
 	if c.isController() {
 		return utils.NewUnsupportedForClientTypeError(
 			c.clientType, "lsxMutexWait")
 	}
 
-	for {
-		f, err := os.OpenFile(lsxMutex, os.O_CREATE|os.O_EXCL, 0644)
-		if err != nil {
-			time.Sleep(time.Millisecond * 500)
-			continue
-		}
-		return f.Close()
-	}
+	lsxMutex.Lock()
+	return nil
 }
 
-func (c *client) lsxMutexSignal() error {
+func (c *client) lsxMutexSignal(ctx types.Context) error {
 	if c.isController() {
 		return utils.NewUnsupportedForClientTypeError(
 			c.clientType, "lsxMutexSignal")
 	}
-	return os.RemoveAll(lsxMutex)
+
+	lsxMutex.Unlock()
+	return nil
 }

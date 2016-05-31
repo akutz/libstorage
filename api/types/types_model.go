@@ -8,10 +8,13 @@ const (
 	Block StorageType = "block"
 
 	// NAS is network attached storage.
-	NAS StorageType = "nas"
+	NAS = "nas"
 
 	// Object is object-backed storage.
-	Object StorageType = "object"
+	Object = "object"
+
+	// Bind is bind-mounted storage.
+	Bind = "bind"
 )
 
 // VolumeMap is the response for listing volumes for a single service.

@@ -71,14 +71,13 @@ func (d *driver) Init(ctx types.Context, config gofig.Config) error {
 }
 
 func (d *driver) Type(ctx types.Context) (types.StorageType, error) {
-	return types.Object, nil
+	return types.Bind, nil
 }
 
 func (d *driver) NextDeviceInfo(
 	ctx types.Context) (*types.NextDeviceInfo, error) {
-	return &types.NextDeviceInfo{
-		Ignore: true,
-	}, nil
+
+	return &types.NextDeviceInfo{Ignore: false}, nil
 }
 
 func (d *driver) InstanceInspect(
@@ -338,7 +337,7 @@ func (d *driver) VolumeAttach(
 
 	vol.Attachments = []*types.VolumeAttachment{att}
 
-	return vol, "1234", nil
+	return vol, vol.ID, nil
 }
 
 func (d *driver) VolumeDetach(

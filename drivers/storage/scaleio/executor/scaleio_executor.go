@@ -58,6 +58,15 @@ func (d *driver) LocalDevices(
 	}, nil
 }
 
+// MapDevice creates a mapping between a volume ID and a device path.
+func (d *driver) MapDevice(
+	ctx types.Context,
+	volumeID, devicePath string,
+	opts types.Store) error {
+
+	return nil
+}
+
 type sdcMappedVolume struct {
 	mdmID       string
 	volumeID    string

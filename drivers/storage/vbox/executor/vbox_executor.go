@@ -80,7 +80,8 @@ func (d *driver) InstanceID(
 func (d *driver) NextDevice(
 	ctx types.Context,
 	opts types.Store) (string, error) {
-	return "", types.ErrNotImplemented
+
+	return "", nil
 }
 
 func (d *driver) LocalDevices(
@@ -113,6 +114,15 @@ func (d *driver) LocalDevices(
 		Driver:    vbox.Name,
 		DeviceMap: mapDiskByID,
 	}, nil
+}
+
+// MapDevice creates a mapping between a volume ID and a device path.
+func (d *driver) MapDevice(
+	ctx types.Context,
+	volumeID, devicePath string,
+	opts types.Store) error {
+
+	return nil
 }
 
 func (d *driver) rescanScsiHosts() {

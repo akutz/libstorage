@@ -24,6 +24,10 @@ const (
 	// LSXCmdWaitForDevice is the command to execute to wait until a device,
 	// identified by volume ID, is presented to the system.
 	LSXCmdWaitForDevice = "wait"
+
+	// LSXCmdMapDevice is the command to execute after a remote VolumeAttach
+	// operation has returned successfully.
+	LSXCmdMapDevice = "mapDevice"
 )
 
 const (
@@ -120,6 +124,12 @@ type StorageExecutorFunctions interface {
 	LocalDevices(
 		ctx Context,
 		opts *LocalDevicesOpts) (*LocalDevices, error)
+
+	// MapDevice creates a mapping between a volume ID and a device path.
+	MapDevice(
+		ctx Context,
+		volumeID, devicePath string,
+		opts Store) error
 }
 
 // ProvidesStorageExecutorCLI is a type that provides the StorageExecutorCLI.

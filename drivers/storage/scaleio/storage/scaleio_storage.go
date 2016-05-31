@@ -119,7 +119,8 @@ func (d *driver) Type(ctx types.Context) (types.StorageType, error) {
 
 func (d *driver) NextDeviceInfo(
 	ctx types.Context) (*types.NextDeviceInfo, error) {
-	return nil, nil
+
+	return &types.NextDeviceInfo{Ignore: true}, nil
 }
 
 func (d *driver) InstanceInspect(

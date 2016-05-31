@@ -1,14 +1,11 @@
 package vfs
 
 import (
-	"bufio"
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -40,7 +37,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestClient(t *testing.T) {
-	apitests.Run(t, vfs.Name, newTestConfig(t),
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t),
 		func(config gofig.Config, client types.Client, t *testing.T) {
 			ctx := context.Background()
 			iid, err := client.Executor().InstanceID(
@@ -52,7 +49,7 @@ func TestClient(t *testing.T) {
 }
 
 func TestRoot(t *testing.T) {
-	apitests.Run(t, vfs.Name, newTestConfig(t), apitests.TestRoot)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), apitests.TestRoot)
 }
 
 var testServicesFunc = func(
@@ -67,12 +64,13 @@ var testServicesFunc = func(
 }
 
 func TestServices(t *testing.T) {
-	apitests.Run(t, vfs.Name, newTestConfig(t), testServicesFunc)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), testServicesFunc)
 }
 
 func TestServicesWithControllerClient(t *testing.T) {
 	apitests.RunWithClientType(
-		t, types.ControllerClient, vfs.Name, newTestConfig(t), testServicesFunc)
+		t, types.ControllerClient, vfs.Name,
+		newTestConfigYAML(t), testServicesFunc)
 }
 
 func TestServiceInpspect(t *testing.T) {
@@ -84,22 +82,22 @@ func TestServiceInpspect(t *testing.T) {
 		assert.Equal(t, vfs.Name, reply.Driver.Name)
 		assert.True(t, reply.Driver.NextDevice.Ignore)
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestExecutors(t *testing.T) {
-	apitests.Run(t, vfs.Name, newTestConfig(t), apitests.TestExecutors)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), apitests.TestExecutors)
 }
 
 func TestExecutorsWithControllerClient(t *testing.T) {
 	apitests.RunWithClientType(
-		t, types.ControllerClient, vfs.Name, newTestConfig(t),
+		t, types.ControllerClient, vfs.Name, newTestConfigYAML(t),
 		apitests.TestExecutorsWithControllerClient)
 }
 
 func TestExecutorHead(t *testing.T) {
 	apitests.RunGroup(
-		t, vfs.Name, newTestConfig(t),
+		t, vfs.Name, newTestConfigYAML(t),
 		apitests.TestHeadExecutorLinux,
 		apitests.TestHeadExecutorDarwin)
 	//apitests.TestHeadExecutorWindows)
@@ -107,14 +105,14 @@ func TestExecutorHead(t *testing.T) {
 
 func TestExecutorGet(t *testing.T) {
 	apitests.RunGroup(
-		t, vfs.Name, newTestConfig(t),
+		t, vfs.Name, newTestConfigYAML(t),
 		apitests.TestGetExecutorLinux,
 		apitests.TestGetExecutorDarwin)
 	//apitests.TestGetExecutorWindows)
 }
 
 func TestStorageDriverVolumes(t *testing.T) {
-	apitests.Run(t, vfs.Name, newTestConfig(t),
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t),
 		func(config gofig.Config, client types.Client, t *testing.T) {
 
 			vols, err := client.Storage().Volumes(
@@ -127,23 +125,24 @@ func TestStorageDriverVolumes(t *testing.T) {
 }
 
 func TestVolumes(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().Volumes(nil, false)
 		if err != nil {
 			t.Fatal(err)
 		}
-		for volumeID, volume := range vols {
+		for volumeID, volume := range tc.volMap {
 			assert.NotNil(t, reply["vfs"][volumeID])
 			assert.EqualValues(t, volume, reply["vfs"][volumeID])
 		}
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
-	apitests.RunWithClientType(t, types.ControllerClient, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
+	apitests.RunWithClientType(
+		t, types.ControllerClient, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumesWithAttachments(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().Volumes(nil, true)
 		if err != nil {
@@ -153,14 +152,14 @@ func TestVolumesWithAttachments(t *testing.T) {
 		assert.NotNil(t, reply["vfs"]["vfs-000"])
 		assert.NotNil(t, reply["vfs"]["vfs-001"])
 		assert.Nil(t, reply["vfs"]["vfs-002"])
-		assert.EqualValues(t, vols["vfs-000"], reply["vfs"]["vfs-000"])
-		assert.EqualValues(t, vols["vfs-001"], reply["vfs"]["vfs-001"])
+		assert.EqualValues(t, tc.volMap["vfs-000"], reply["vfs"]["vfs-000"])
+		assert.EqualValues(t, tc.volMap["vfs-001"], reply["vfs"]["vfs-001"])
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumesWithAttachmentsWithControllerClient(t *testing.T) {
-	tc, _, _, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 
 		_, err := client.API().Volumes(nil, true)
@@ -168,26 +167,27 @@ func TestVolumesWithAttachmentsWithControllerClient(t *testing.T) {
 		assert.Equal(t, "batch processing error", err.Error())
 	}
 
-	apitests.RunWithClientType(t, types.ControllerClient, vfs.Name, tc, tf)
+	apitests.RunWithClientType(
+		t, types.ControllerClient, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumesByService(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().VolumesByService(nil, "vfs", false)
 		if err != nil {
 			t.Fatal(err)
 		}
-		for volumeID, volume := range vols {
+		for volumeID, volume := range tc.volMap {
 			assert.NotNil(t, reply[volumeID])
 			assert.EqualValues(t, volume, reply[volumeID])
 		}
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumesByServiceWithAttachments(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().VolumesByService(nil, "vfs", true)
 		if err != nil {
@@ -196,66 +196,66 @@ func TestVolumesByServiceWithAttachments(t *testing.T) {
 		assert.NotNil(t, reply["vfs-000"])
 		assert.NotNil(t, reply["vfs-001"])
 		assert.Nil(t, reply["vfs-002"])
-		assert.EqualValues(t, vols["vfs-000"], reply["vfs-000"])
-		assert.EqualValues(t, vols["vfs-001"], reply["vfs-001"])
+		assert.EqualValues(t, tc.volMap["vfs-000"], reply["vfs-000"])
+		assert.EqualValues(t, tc.volMap["vfs-001"], reply["vfs-001"])
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumeInspect(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().VolumeInspect(nil, "vfs", "vfs-000", false)
 		if err != nil {
 			t.Fatal(err)
 		}
 		assert.NotNil(t, reply)
-		assert.EqualValues(t, vols[reply.ID], reply)
+		assert.EqualValues(t, tc.volMap[reply.ID], reply)
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumeInspectWithAttachments(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().VolumeInspect(nil, "vfs", "vfs-000", true)
 		if err != nil {
 			t.Fatal(err)
 		}
 		assert.NotNil(t, reply)
-		assert.EqualValues(t, vols[reply.ID], reply)
+		assert.EqualValues(t, tc.volMap[reply.ID], reply)
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestSnapshots(t *testing.T) {
-	tc, _, _, snaps := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().Snapshots(nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		for snapshotID, snapshot := range snaps {
+		for snapshotID, snapshot := range tc.snapMap {
 			assert.NotNil(t, reply["vfs"][snapshotID])
 			assert.EqualValues(t, snapshot, reply["vfs"][snapshotID])
 		}
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestSnapshotsByService(t *testing.T) {
-	tc, _, _, snaps := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		reply, err := client.API().SnapshotsByService(nil, "vfs")
 		if err != nil {
 			t.Fatal(err)
 		}
-		for snapshotID, snapshot := range snaps {
+		for snapshotID, snapshot := range tc.snapMap {
 			assert.NotNil(t, reply[snapshotID])
 			assert.EqualValues(t, snapshot, reply[snapshotID])
 		}
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumeCreate(t *testing.T) {
@@ -297,7 +297,7 @@ func TestVolumeCreate(t *testing.T) {
 		assert.Equal(t, "root@example.com", reply.Fields["owner"])
 	}
 
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeCopy(t *testing.T) {
@@ -325,7 +325,7 @@ func TestVolumeCopy(t *testing.T) {
 		assert.Equal(t, request.Opts["owner"], reply.Fields["owner"])
 	}
 
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeRemove(t *testing.T) {
@@ -337,7 +337,7 @@ func TestVolumeRemove(t *testing.T) {
 		assertVolDir(t, config, "vfs-002", false)
 	}
 
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf1)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf1)
 
 	tf2 := func(config gofig.Config, client types.Client, t *testing.T) {
 		err := client.API().VolumeRemove(nil, vfs.Name, "vfs-002")
@@ -347,7 +347,7 @@ func TestVolumeRemove(t *testing.T) {
 		assert.Equal(t, 404, httpErr.Status())
 	}
 
-	apitests.RunGroup(t, vfs.Name, newTestConfig(t), tf1, tf2)
+	apitests.RunGroup(t, vfs.Name, newTestConfigYAML(t), tf1, tf2)
 }
 
 func TestVolumeSnapshot(t *testing.T) {
@@ -387,7 +387,7 @@ func TestVolumeSnapshot(t *testing.T) {
 		}
 		assert.EqualValues(t, 10, len(snapshots))
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeCreateFromSnapshot(t *testing.T) {
@@ -427,10 +427,12 @@ func TestVolumeCreateFromSnapshot(t *testing.T) {
 		assert.Equal(t, request.Opts["owner"], reply.Fields["owner"])
 
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeAttach(t *testing.T) {
+
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 
 		nextDevice, err := client.Executor().NextDevice(
@@ -441,22 +443,30 @@ func TestVolumeAttach(t *testing.T) {
 			t.FailNow()
 		}
 
-		request := &types.VolumeAttachRequest{
+		req := &types.VolumeAttachRequest{
 			NextDeviceName: &nextDevice,
 		}
 
+		volID := "vfs-002"
+
 		reply, attTokn, err := client.API().VolumeAttach(
-			nil, vfs.Name, "vfs-002", request)
-		assert.NoError(t, err)
-		if reply == nil {
+			nil, vfs.Name, volID, req)
+		if err != nil {
+			assert.NoError(t, err)
 			t.FailNow()
 		}
-		assert.Equal(t, "1234", attTokn)
-		assert.Equal(t, "vfs-002", reply.ID)
-		assert.Equal(t, "/dev/xvdc", reply.Attachments[0].DeviceName)
+
+		if reply == nil {
+			assert.NotNil(t, reply)
+			t.FailNow()
+		}
+
+		assert.Equal(t, volID, attTokn)
+		assert.Equal(t, volID, reply.ID)
+		assert.Equal(t, req.NextDeviceName, reply.Attachments[0].DeviceName)
 
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumeAttachWithControllerClient(t *testing.T) {
@@ -475,7 +485,7 @@ func TestVolumeAttachWithControllerClient(t *testing.T) {
 	}
 
 	apitests.RunWithClientType(
-		t, types.ControllerClient, vfs.Name, newTestConfig(t), tf)
+		t, types.ControllerClient, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeDetach(t *testing.T) {
@@ -493,7 +503,7 @@ func TestVolumeDetach(t *testing.T) {
 		assert.Equal(t, "vfs-001", reply.ID)
 		assert.Equal(t, 0, len(reply.Attachments))
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeDetachWithControllerClient(t *testing.T) {
@@ -504,21 +514,21 @@ func TestVolumeDetachWithControllerClient(t *testing.T) {
 		assert.Equal(t, "unsupported op for client type", err.Error())
 	}
 	apitests.RunWithClientType(
-		t, types.ControllerClient, vfs.Name, newTestConfig(t), tf)
+		t, types.ControllerClient, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeDetachAllForService(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		request := &types.VolumeDetachRequest{}
 		reply, err := client.API().VolumeDetachAllForService(
 			nil, vfs.Name, request)
 		assert.NoError(t, err)
-		for _, v := range vols {
+		for _, v := range tc.volMap {
 			v.Attachments = nil
 		}
 		assert.Equal(t, 3, len(reply))
-		assert.EqualValues(t, vols, reply)
+		assert.EqualValues(t, tc.volMap, reply)
 
 		reply, err = client.API().VolumesByService(
 			nil, vfs.Name, true)
@@ -529,9 +539,9 @@ func TestVolumeDetachAllForService(t *testing.T) {
 			nil, vfs.Name, false)
 		assert.NoError(t, err)
 		assert.Equal(t, 3, len(reply))
-		assert.EqualValues(t, vols, reply)
+		assert.EqualValues(t, tc.volMap, reply)
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumeDetachAllForServiceWithControllerClient(t *testing.T) {
@@ -542,22 +552,22 @@ func TestVolumeDetachAllForServiceWithControllerClient(t *testing.T) {
 		assert.Equal(t, "unsupported op for client type", err.Error())
 	}
 	apitests.RunWithClientType(
-		t, types.ControllerClient, vfs.Name, newTestConfig(t), tf)
+		t, types.ControllerClient, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestVolumeDetachAll(t *testing.T) {
-	tc, _, vols, _ := newTestConfigAll(t)
+	tc := newTestConfig(t)
 	tf := func(config gofig.Config, client types.Client, t *testing.T) {
 		request := &types.VolumeDetachRequest{}
 		reply, err := client.API().VolumeDetachAll(
 			nil, request)
 		assert.NoError(t, err)
-		for _, v := range vols {
+		for _, v := range tc.volMap {
 			v.Attachments = nil
 		}
 		assert.Equal(t, 1, len(reply))
 		assert.Equal(t, 3, len(reply[vfs.Name]))
-		assert.EqualValues(t, vols, reply[vfs.Name])
+		assert.EqualValues(t, tc.volMap, reply[vfs.Name])
 
 		reply, err = client.API().Volumes(nil, true)
 		assert.NoError(t, err)
@@ -569,7 +579,7 @@ func TestVolumeDetachAll(t *testing.T) {
 		assert.Equal(t, 1, len(reply))
 		assert.Equal(t, 3, len(reply[vfs.Name]))
 	}
-	apitests.Run(t, vfs.Name, tc, tf)
+	apitests.Run(t, vfs.Name, tc.configYAML, tf)
 }
 
 func TestVolumeDetachAllWithControllerClient(t *testing.T) {
@@ -580,7 +590,7 @@ func TestVolumeDetachAllWithControllerClient(t *testing.T) {
 		assert.Equal(t, "unsupported op for client type", err.Error())
 	}
 	apitests.RunWithClientType(
-		t, types.ControllerClient, vfs.Name, newTestConfig(t), tf)
+		t, types.ControllerClient, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestSnapshotCopy(t *testing.T) {
@@ -608,7 +618,7 @@ func TestSnapshotCopy(t *testing.T) {
 		assert.Equal(t, "root@example.com", reply.Fields["owner"])
 
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestSnapshotRemove(t *testing.T) {
@@ -626,7 +636,7 @@ func TestSnapshotRemove(t *testing.T) {
 		assert.Nil(t, reply)
 
 	}
-	apitests.Run(t, vfs.Name, newTestConfig(t), tf)
+	apitests.Run(t, vfs.Name, newTestConfigYAML(t), tf)
 }
 
 func TestInstanceID(t *testing.T) {
@@ -636,7 +646,7 @@ func TestInstanceID(t *testing.T) {
 		t.FailNow()
 	}
 	apitests.Run(
-		t, vfs.Name, newTestConfig(t),
+		t, vfs.Name, newTestConfigYAML(t),
 		(&apitests.InstanceIDTest{
 			Driver:   vfs.Name,
 			Expected: iid,
@@ -661,33 +671,25 @@ func TestInstance(t *testing.T) {
 }
 
 func TestNextDevice(t *testing.T) {
+	tc := newTestConfig(t)
 	apitests.RunGroup(
-		t, vfs.Name, newTestConfig(t),
+		t, vfs.Name, tc.configYAML,
 		(&apitests.NextDeviceTest{
 			Driver:   vfs.Name,
-			Expected: "/dev/xvdc",
+			Expected: path.Join(tc.vfsRoot, "dev", "xvdc"),
 		}).Test)
 }
 
 func TestLocalDevices(t *testing.T) {
-	cfg, dfc, _, _ := newTestConfigAll(t)
-	scn := bufio.NewScanner(bytes.NewBuffer(dfc))
-	dfcMap := map[string]string{}
-	for scn.Scan() {
-		p := strings.SplitN(scn.Text(), "=", 2)
-		k := p[0]
-		v := ""
-		if len(p) > 1 {
-			v = p[1]
-		}
-		dfcMap[k] = v
-	}
-
+	tc := newTestConfig(t)
 	apitests.RunGroup(
-		t, vfs.Name, cfg,
+		t, vfs.Name, tc.configYAML,
 		(&apitests.LocalDevicesTest{
-			Driver:   vfs.Name,
-			Expected: &types.LocalDevices{Driver: vfs.Name, DeviceMap: dfcMap},
+			Driver: vfs.Name,
+			Expected: &types.LocalDevices{
+				Driver:    vfs.Name,
+				DeviceMap: tc.devMap,
+			},
 		}).Test)
 }
 
@@ -725,61 +727,77 @@ var (
 	testDirsLock = &sync.RWMutex{}
 )
 
-func newTestConfig(t *testing.T) []byte {
-	tc, _, _, _ := newTestConfigAll(t)
-	return tc
+type testConfig struct {
+	vfsRoot    string
+	configYAML []byte
+	devMap     map[string]string
+	volMap     map[string]*types.Volume
+	snapMap    map[string]*types.Snapshot
 }
 
-func newTestConfigAll(
-	t *testing.T) (
-	[]byte,
-	[]byte,
-	map[string]*types.Volume,
-	map[string]*types.Snapshot) {
+func newTestConfigYAML(t *testing.T) []byte {
+	tc := newTestConfig(t)
+	return tc.configYAML
+}
 
-	hostName, err := utils.HostName()
-	assert.NoError(t, err)
-	if err != nil {
+func newTestConfig(t *testing.T) *testConfig {
+
+	var (
+		err        error
+		hostName   string
+		devMapFile *os.File
+		tc         = &testConfig{
+			devMap:  map[string]string{},
+			volMap:  map[string]*types.Volume{},
+			snapMap: map[string]*types.Snapshot{},
+		}
+	)
+
+	if hostName, err = utils.HostName(); err != nil {
+		assert.NoError(t, err)
 		t.FailNow()
 	}
 
-	d, err := ioutil.TempDir("", "")
-	assert.NoError(t, err)
-	if err != nil {
+	if tc.vfsRoot, err = ioutil.TempDir("", ""); err != nil {
+		assert.NoError(t, err)
 		t.FailNow()
 	}
-	t.Logf("created temp vfs root dir: %s", d)
+	t.Logf("created temp vfs root dir: %s", tc.vfsRoot)
 
 	func() {
 		testDirsLock.Lock()
 		defer testDirsLock.Unlock()
-		testDirs = append(testDirs, d)
+		testDirs = append(testDirs, tc.vfsRoot)
 	}()
 
-	vd := path.Join(d, "vol")
-	if err := os.MkdirAll(vd, 0755); err != nil {
+	vd := path.Join(tc.vfsRoot, "vol")
+	if err = os.MkdirAll(vd, 0755); err != nil {
 		assert.NoError(t, err)
 		t.FailNow()
 	}
 	t.Logf("created temp vfs vol dir: %s", vd)
-	sd := path.Join(d, "snap")
+	sd := path.Join(tc.vfsRoot, "snap")
 	if err := os.MkdirAll(sd, 0755); err != nil {
 		assert.NoError(t, err)
 		t.FailNow()
 	}
 	t.Logf("created temp vfs snap dir: %s", sd)
 
-	dp := path.Join(d, "dev")
-	devFileContents := []byte(fmt.Sprintf(devFile, d))
-	err = ioutil.WriteFile(dp, devFileContents, 0644)
-	assert.NoError(t, err)
+	tc.devMap["vfs-000"] = path.Join(tc.vfsRoot, "dev", "xvda")
+	tc.devMap["vfs-001"] = path.Join(tc.vfsRoot, "dev", "xvdb")
+	devMapFile, err = os.Open(path.Join(tc.vfsRoot, "dev.json"))
 	if err != nil {
+		assert.NoError(t, err)
 		t.FailNow()
 	}
-	t.Logf("created temp vfs dev file: %s", dp)
+	defer devMapFile.Close()
 
-	vols := map[string]*types.Volume{}
-	snaps := map[string]*types.Snapshot{}
+	enc := json.NewEncoder(devMapFile)
+	if err = enc.Encode(tc.devMap); err != nil {
+		assert.NoError(t, err)
+		t.FailNow()
+	}
+	t.Logf("created temp vfs dev file: %s", devMapFile.Name())
 
 	for x := 0; x < 3; x++ {
 		var vj []byte
@@ -793,7 +811,7 @@ func newTestConfigAll(
 			assert.NoError(t, err)
 			t.FailNow()
 		}
-		vols[v.ID] = v
+		tc.volMap[v.ID] = v
 		vjp := path.Join(vd, fmt.Sprintf("%s.json", v.ID))
 		os.MkdirAll(path.Join(vd, v.ID), 0755)
 		if err := ioutil.WriteFile(vjp, vj, 0644); err != nil {
@@ -808,7 +826,7 @@ func newTestConfigAll(
 				assert.NoError(t, err)
 				t.FailNow()
 			}
-			snaps[s.ID] = s
+			tc.snapMap[s.ID] = s
 			sjp := path.Join(sd, fmt.Sprintf("vfs-%03d-%03d.json", x, y))
 			if err := ioutil.WriteFile(sjp, sj, 0644); err != nil {
 				assert.NoError(t, err)
@@ -817,7 +835,8 @@ func newTestConfigAll(
 		}
 	}
 
-	return []byte(fmt.Sprintf(configYAML, d)), devFileContents, vols, snaps
+	tc.configYAML = []byte(fmt.Sprintf(configYAML, tc.vfsRoot))
+	return tc
 }
 
 const configYAML = "vfs:\n  root: %s"
@@ -867,10 +886,3 @@ const snapJSON = `{
         "priority":     "2"
     }
 }`
-
-const devFile = `/dev/xvda=%[1]s/vfs-000
-/dev/xvdb=%[1]s/vfs-001
-/dev/xvdc
-/dev/xvdd
-/dev/xvde
-/dev/xvdf`
