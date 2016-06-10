@@ -555,49 +555,49 @@ func (d *driver) NetworkName(
 }
 
 func (d *driver) volumeRootPath() string {
-	return d.config.GetString(types.ConfigIgVolOpsMountRootPath)
+	return d.config.GetString(types.ConfigIGVolOpsMountRootPath)
 }
 
 func (d *driver) volumeType() string {
-	return d.config.GetString(types.ConfigIgVolOpsCreateDefaultType)
+	return d.config.GetString(types.ConfigIGVolOpsCreateDefaultType)
 }
 
 func (d *driver) iops() string {
-	return d.config.GetString(types.ConfigIgVolOpsCreateDefaultIOPS)
+	return d.config.GetString(types.ConfigIGVolOpsCreateDefaultIOPS)
 }
 
 func (d *driver) size() string {
-	return d.config.GetString(types.ConfigIgVolOpsCreateDefaultSize)
+	return d.config.GetString(types.ConfigIGVolOpsCreateDefaultSize)
 }
 
 func (d *driver) availabilityZone() string {
-	return d.config.GetString(types.ConfigIgVolOpsCreateDefaultAZ)
+	return d.config.GetString(types.ConfigIGVolOpsCreateDefaultAZ)
 }
 
 func (d *driver) fsType() string {
-	return d.config.GetString(types.ConfigIgVolOpsCreateDefaultFsType)
+	return d.config.GetString(types.ConfigIGVolOpsCreateDefaultFSType)
 }
 
 func (d *driver) mountDirPath() string {
-	return d.config.GetString(types.ConfigIgVolOpsMountPath)
+	return d.config.GetString(types.ConfigIGVolOpsMountPath)
 }
 
 func (d *driver) volumeCreateImplicit() bool {
-	return d.config.GetBool(types.ConfigIgVolOpsCreateImplicit)
+	return d.config.GetBool(types.ConfigIGVolOpsCreateImplicit)
 }
 
 func registerConfig() {
 	r := gofig.NewRegistration("Docker")
 	r.Key(gofig.String, "", "ext4", "",
-		types.ConfigIgVolOpsCreateDefaultFsType)
-	r.Key(gofig.String, "", "", "", types.ConfigIgVolOpsCreateDefaultType)
-	r.Key(gofig.String, "", "", "", types.ConfigIgVolOpsCreateDefaultIOPS)
-	r.Key(gofig.String, "", "16", "", types.ConfigIgVolOpsCreateDefaultSize)
-	r.Key(gofig.String, "", "", "", types.ConfigIgVolOpsCreateDefaultAZ)
+		types.ConfigIGVolOpsCreateDefaultFSType)
+	r.Key(gofig.String, "", "", "", types.ConfigIGVolOpsCreateDefaultType)
+	r.Key(gofig.String, "", "", "", types.ConfigIGVolOpsCreateDefaultIOPS)
+	r.Key(gofig.String, "", "16", "", types.ConfigIGVolOpsCreateDefaultSize)
+	r.Key(gofig.String, "", "", "", types.ConfigIGVolOpsCreateDefaultAZ)
 	r.Key(gofig.String, "", types.Lib.Join("volumes"), "",
-		types.ConfigIgVolOpsMountPath)
-	r.Key(gofig.String, "", "/data", "", types.ConfigIgVolOpsMountRootPath)
-	r.Key(gofig.Bool, "", true, "", types.ConfigIgVolOpsCreateImplicit)
-	r.Key(gofig.Bool, "", false, "", types.ConfigIgVolOpsMountPreempt)
+		types.ConfigIGVolOpsMountPath)
+	r.Key(gofig.String, "", "/data", "", types.ConfigIGVolOpsMountRootPath)
+	r.Key(gofig.Bool, "", true, "", types.ConfigIGVolOpsCreateImplicit)
+	r.Key(gofig.Bool, "", false, "", types.ConfigIGVolOpsMountPreempt)
 	gofig.Register(r)
 }

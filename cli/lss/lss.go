@@ -12,6 +12,7 @@ import (
 	flag "github.com/spf13/pflag"
 
 	"github.com/emccode/libstorage/api"
+	"github.com/emccode/libstorage/api/context"
 	"github.com/emccode/libstorage/api/server"
 	apitypes "github.com/emccode/libstorage/api/types"
 	apiconfig "github.com/emccode/libstorage/api/utils/config"
@@ -51,6 +52,8 @@ func init() {
 // Run the server.
 func Run() {
 	server.CloseOnAbort()
+
+	ctx := context.Background()
 
 	flag.Usage = printUsage
 	flag.Parse()
@@ -105,7 +108,7 @@ func Run() {
 		os.Exit(0)
 	}
 
-	cfg, err := apiconfig.NewConfig()
+	cfg, err := apiconfig.NewConfig(ctx)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s: error: %v\n", os.Args[0], err)
 		os.Exit(1)
@@ -165,7 +168,7 @@ func Run() {
 
 	server.CloseOnAbort()
 
-	_, errs, err := server.Serve(nil, config)
+	_, errs, err := server.Serve(ctx, config)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "%s: error: %v\n", os.Args[0], err)
 		os.Exit(1)

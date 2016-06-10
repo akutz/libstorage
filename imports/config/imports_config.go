@@ -34,12 +34,12 @@ func init() {
 		defaultVal interface{},
 		description string,
 		keyVal types.ConfigKey,
-		args ...string) {
+		args ...interface{}) {
 
 		if args == nil {
-			args = []string{string(keyVal)}
+			args = []interface{}{keyVal}
 		} else {
-			args = append([]string{string(keyVal)}, args...)
+			args = append([]interface{}{keyVal}, args...)
 		}
 
 		r.Key(keyType, "", defaultVal, description, args...)
@@ -57,7 +57,7 @@ func init() {
 	rk(gofig.String, defaultAEM, "", types.ConfigServerAutoEndpointMode)
 	rk(gofig.String, defaultOSDriver, "", types.ConfigOSDriver)
 	rk(gofig.String, defaultStorageDriver, "", types.ConfigStorageDriver)
-	rk(gofig.String, defaultIntDriver, "", types.ConfigIntegrationDriver)
+	rk(gofig.String, defaultIntDriver, "", types.ConfigIGDriver)
 	rk(gofig.String, defaultClientType, "", types.ConfigClientType)
 	rk(gofig.String, defaultLogLevel, "", types.ConfigLogLevel)
 	rk(gofig.String, "", logStdoutDesc, types.ConfigLogStderr)
@@ -69,11 +69,11 @@ func init() {
 	rk(gofig.Int, 300, "", types.ConfigHTTPReadTimeout)
 	rk(gofig.String, types.LSX.String(), "", types.ConfigExecutorPath)
 	rk(gofig.Bool, false, "", types.ConfigExecutorNoDownload)
-	rk(gofig.Bool, false, "", types.ConfigIgVolOpsMountPreempt)
-	rk(gofig.Bool, false, "", types.ConfigIgVolOpsCreateDisable)
-	rk(gofig.Bool, false, "", types.ConfigIgVolOpsRemoveDisable)
-	rk(gofig.Bool, false, "", types.ConfigIgVolOpsUnmountIgnoreUsed)
-	rk(gofig.Bool, true, "", types.ConfigIgVolOpsPathCache)
+	rk(gofig.Bool, false, "", types.ConfigIGVolOpsMountPreempt)
+	rk(gofig.Bool, false, "", types.ConfigIGVolOpsCreateDisable)
+	rk(gofig.Bool, false, "", types.ConfigIGVolOpsRemoveDisable)
+	rk(gofig.Bool, false, "", types.ConfigIGVolOpsUnmountIgnoreUsed)
+	rk(gofig.Bool, true, "", types.ConfigIGVolOpsPathCache)
 	rk(gofig.String, "30m", "", types.ConfigClientCacheInstanceID)
 	rk(gofig.String, "30s", "", types.ConfigDeviceAttachTimeout)
 	rk(gofig.Int, 0, "", types.ConfigDeviceScanType)

@@ -8,6 +8,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/emccode/libstorage/api/context"
 	"github.com/emccode/libstorage/api/server"
 	apicfg "github.com/emccode/libstorage/api/utils/config"
 )
@@ -59,7 +60,9 @@ func serve(
 		"args": args,
 	}).Info("serving")
 
-	config, err := apicfg.NewConfig()
+	ctx := context.Background()
+
+	config, err := apicfg.NewConfig(ctx)
 	if err != nil {
 		return C.CString(err.Error())
 	}
@@ -68,7 +71,7 @@ func serve(
 		os.Setenv("LIBSTORAGE_HOST", szHost)
 	}
 
-	_, errs, err := server.Serve(nil, config)
+	_, errs, err := server.Serve(ctx, config)
 	if err != nil {
 		return C.CString(err.Error())
 	}

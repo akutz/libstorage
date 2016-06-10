@@ -20,11 +20,11 @@ func ParseTLSConfig(
 	fields log.Fields,
 	roots ...string) (*tls.Config, error) {
 
-	f := func(k string, v interface{}) {
+	f := func(k types.ConfigKey, v interface{}) {
 		if fields == nil {
 			return
 		}
-		fields[k] = v
+		fields[k.String()] = v
 	}
 
 	if !isSet(config, types.ConfigTLS, roots...) {

@@ -13,7 +13,7 @@ import (
 )
 
 // NewConfig returns a new configuration instance.
-func NewConfig() (gofig.Config, error) {
+func NewConfig(ctx types.Context) (gofig.Config, error) {
 	config := gofig.New()
 
 	etcYML := types.Etc.Join("config.yml")
@@ -36,7 +36,7 @@ func NewConfig() (gofig.Config, error) {
 		return nil, err
 	}
 
-	types.BackCompat(config)
+	types.BackCompat(ctx, config)
 
 	return config, nil
 }

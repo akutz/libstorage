@@ -289,7 +289,7 @@ func (s *HTTPServer) Context() types.Context {
 	return s.ctx
 }
 
-func getLogIO(path, propName string) io.WriteCloser {
+func getLogIO(path string, key types.ConfigKey) io.WriteCloser {
 
 	if path != "" {
 		logio, err := os.OpenFile(
@@ -298,7 +298,7 @@ func getLogIO(path, propName string) io.WriteCloser {
 			log.Error(err)
 		}
 		log.WithFields(log.Fields{
-			"logType": propName,
+			"logType": key.String(),
 			"logPath": path,
 		}).Debug("using log file")
 		return logio

@@ -1,69 +1,182 @@
 package types
 
+// define the integration config parent keys
 const (
-	//ConfigIg is a config key.
-	ConfigIg = ConfigRoot + ".integration"
+	_ ConfigKey = configSectionMaxParentsCommon - 1 + iota
 
-	//ConfigIgVol is a config key.
-	ConfigIgVol = ConfigIg + ".volume"
+	// ConfigIG is a config key.
+	ConfigIG
 
-	//ConfigIgVolOps is a config key.
-	ConfigIgVolOps = ConfigIgVol + ".operations"
+	// ConfigIGVol is a config key.
+	ConfigIGVol
 
-	//ConfigIgVolOpsMount is a config key.
-	ConfigIgVolOpsMount = ConfigIgVolOps + ".mount"
+	// ConfigIGVolOps is a config key.
+	ConfigIGVolOps
 
-	//ConfigIgVolOpsMountPreempt is a config key.
-	ConfigIgVolOpsMountPreempt = ConfigIgVolOpsMount + ".preempt"
+	// ConfigIGVolOpsMount is a config key.
+	ConfigIGVolOpsMount
 
-	//ConfigIgVolOpsMountPath is a config key.
-	ConfigIgVolOpsMountPath = ConfigIgVolOpsMount + ".path"
+	// ConfigIGVolOpsUnmount is a config key.
+	ConfigIGVolOpsUnmount
 
-	//ConfigIgVolOpsMountRootPath is a config key.
-	ConfigIgVolOpsMountRootPath = ConfigIgVolOpsMount + ".rootPath"
+	// ConfigIGVolOpsPath is a config key.
+	ConfigIGVolOpsPath
 
-	//ConfigIgVolOpsUnmount is a config key.
-	ConfigIgVolOpsUnmount = ConfigIgVolOps + ".unmount"
+	// ConfigIGVolOpsCreate is a config key.
+	ConfigIGVolOpsCreate
 
-	//ConfigIgVolOpsUnmountIgnoreUsed is a config key.
-	ConfigIgVolOpsUnmountIgnoreUsed = ConfigIgVolOpsUnmount + ".ignoreusedcount"
+	// ConfigIGVolOpsCreateDefault is a config key.
+	ConfigIGVolOpsCreateDefault
 
-	// ConfigIgVolOpsPath is a config key.
-	ConfigIgVolOpsPath = ConfigIgVolOps + ".path"
+	// ConfigIGVolOpsRemove is a config key.
+	ConfigIGVolOpsRemove
 
-	// ConfigIgVolOpsPathCache is a config key.
-	ConfigIgVolOpsPathCache = ConfigIgVolOpsPath + ".cache"
-
-	// ConfigIgVolOpsCreate is a config key.
-	ConfigIgVolOpsCreate = ConfigIgVolOps + ".create"
-
-	// ConfigIgVolOpsCreateDisable is a config key.
-	ConfigIgVolOpsCreateDisable = ConfigIgVolOpsCreate + ".disable"
-
-	// ConfigIgVolOpsCreateImplicit is a config key.
-	ConfigIgVolOpsCreateImplicit = ConfigIgVolOpsCreate + ".implicit"
-
-	// ConfigIgVolOpsCreateDefault is a config key.
-	ConfigIgVolOpsCreateDefault = ConfigIgVolOpsCreate + ".default"
-
-	// ConfigIgVolOpsCreateDefaultSize is a config key.
-	ConfigIgVolOpsCreateDefaultSize = ConfigIgVolOpsCreateDefault + ".size"
-
-	// ConfigIgVolOpsCreateDefaultFsType is a config key.
-	ConfigIgVolOpsCreateDefaultFsType = ConfigIgVolOpsCreateDefault + ".fsType"
-
-	// ConfigIgVolOpsCreateDefaultAZ is a config key.
-	ConfigIgVolOpsCreateDefaultAZ = ConfigIgVolOpsCreateDefault + ".availabilityZone"
-
-	// ConfigIgVolOpsCreateDefaultType is a config key.
-	ConfigIgVolOpsCreateDefaultType = ConfigIgVolOpsCreateDefault + ".type"
-
-	// ConfigIgVolOpsCreateDefaultIOPS is a config key.
-	ConfigIgVolOpsCreateDefaultIOPS = ConfigIgVolOpsCreateDefault + ".IOPS"
-
-	// ConfigIgVolOpsRemove is a config key.
-	ConfigIgVolOpsRemove = ConfigIgVolOps + ".remove"
-
-	// ConfigIgVolOpsRemoveDisable is a config key.
-	ConfigIgVolOpsRemoveDisable = ConfigIgVolOpsRemove + ".disable"
+	configSectionMaxParentsIG
 )
+
+// define the IG section keys
+const (
+	configSectionMinIG = configSectionMaxValsCommon - 1 + iota
+
+	// ConfigIGDriver is a config key.
+	ConfigIGDriver
+
+	configSectionMaxIG
+)
+
+// define the IG Vol Ops Mount section keys
+const (
+	configSectionMinIGVolOpsMount = configSectionMaxIG - 1 + iota
+
+	// ConfigIGVolOpsMountPreempt is a config key.
+	ConfigIGVolOpsMountPreempt
+
+	// ConfigIGVolOpsMountPath is a config key.
+	ConfigIGVolOpsMountPath
+
+	// ConfigIGVolOpsMountRootPath is a config key.
+	ConfigIGVolOpsMountRootPath
+
+	configSectionMaxIGVolOpsMount
+)
+
+// define the IG Vol Ops Unmount section keys
+const (
+	configSectionMinIGVolOpsUnmount = configSectionMaxIGVolOpsMount - 1 + iota
+
+	// ConfigIGVolOpsUnmountIgnoreUsed is a config key.
+	ConfigIGVolOpsUnmountIgnoreUsed
+
+	configSectionMaxIGVolOpsUnmount
+)
+
+// define the IG Vol Ops Path section keys
+const (
+	configSectionMinIGVolOpsPath = configSectionMaxIGVolOpsUnmount - 1 + iota
+
+	// ConfigIGVolOpsPathCache is a config key.
+	ConfigIGVolOpsPathCache
+
+	configSectionMaxIGVolOpsPath
+)
+
+// define the IG Vol Ops Create section keys
+const (
+	configSectionMinIGVolOpsCreate = configSectionMaxIGVolOpsPath - 1 + iota
+
+	// ConfigIGVolOpsCreateDisable is a config key.
+	ConfigIGVolOpsCreateDisable
+
+	// ConfigIGVolOpsCreateImplicit is a config key.
+	ConfigIGVolOpsCreateImplicit
+
+	configSectionMaxIGVolOpsCreate
+)
+
+// define the IG Vol Ops Create Defaults section keys
+const (
+	configSectionMinIGVolOpsCreateDefault = configSectionMaxIGVolOpsCreate - 1 + iota
+
+	// ConfigIGVolOpsCreateDefaultSize is a config key.
+	ConfigIGVolOpsCreateDefaultSize
+
+	// ConfigIGVolOpsCreateDefaultFSType is a config key.
+	ConfigIGVolOpsCreateDefaultFSType
+
+	// ConfigIGVolOpsCreateDefaultAZ is a config key.
+	ConfigIGVolOpsCreateDefaultAZ
+
+	// ConfigIGVolOpsCreateDefaultType is a config key.
+	ConfigIGVolOpsCreateDefaultType
+
+	// ConfigIGVolOpsCreateDefaultIOPS is a config key.
+	ConfigIGVolOpsCreateDefaultIOPS
+
+	configSectionMaxIGVolOpsCreateDefault
+)
+
+// define the IG Vol Ops Remove section keys
+const (
+	configSectionMinIGVolOpsRemove = configSectionMaxIGVolOpsCreateDefault - 1 + iota
+
+	// ConfigIGVolOpsRemoveDisable is a config key.
+	ConfigIGVolOpsRemoveDisable
+
+	configSectionMaxIGVolOpsRemove
+)
+
+const configSectionMaxValsIG = configSectionMaxIGVolOpsRemove
+
+const (
+	configIG                          = configRoot + ".integration"
+	configIGDriver                    = configIG + ".driver"
+	configIGVol                       = configIG + ".volume"
+	configIGVolOps                    = configIGVol + ".operations"
+	configIGVolOpsMount               = configIGVolOps + ".mount"
+	configIGVolOpsMountPreempt        = configIGVolOpsMount + ".preempt"
+	configIGVolOpsMountPath           = configIGVolOpsMount + ".path"
+	configIGVolOpsMountRootPath       = configIGVolOpsMount + ".rootPath"
+	configIGVolOpsUnmount             = configIGVolOps + ".unmount"
+	configIGVolOpsUnmountIgnoreUsed   = configIGVolOpsUnmount + ".ignoreusedcount"
+	configIGVolOpsPath                = configIGVolOps + ".path"
+	configIGVolOpsPathCache           = configIGVolOpsPath + ".cache"
+	configIGVolOpsCreate              = configIGVolOps + ".create"
+	configIGVolOpsCreateDisable       = configIGVolOpsCreate + ".disable"
+	configIGVolOpsCreateImplicit      = configIGVolOpsCreate + ".implicit"
+	configIGVolOpsCreateDefault       = configIGVolOpsCreate + ".default"
+	configIGVolOpsCreateDefaultSize   = configIGVolOpsCreateDefault + ".size"
+	configIGVolOpsCreateDefaultFSType = configIGVolOpsCreateDefault + ".fsType"
+	configIGVolOpsCreateDefaultAZ     = configIGVolOpsCreateDefault + ".availabilityZone"
+	configIGVolOpsCreateDefaultType   = configIGVolOpsCreateDefault + ".type"
+	configIGVolOpsCreateDefaultIOPS   = configIGVolOpsCreateDefault + ".IOPS"
+	configIGVolOpsRemove              = configIGVolOps + ".remove"
+	configIGVolOpsRemoveDisable       = configIGVolOpsRemove + ".disable"
+)
+
+var configIGKeyPaths = map[ConfigKey]string{
+	ConfigIG:                          configIG,
+	ConfigIGDriver:                    configIGDriver,
+	ConfigIGVol:                       configIGVol,
+	ConfigIGVolOps:                    configIGVolOps,
+	ConfigIGVolOpsMount:               configIGVolOpsMount,
+	ConfigIGVolOpsMountPreempt:        configIGVolOpsMountPreempt,
+	ConfigIGVolOpsMountPath:           configIGVolOpsMountPath,
+	ConfigIGVolOpsMountRootPath:       configIGVolOpsMountRootPath,
+	ConfigIGVolOpsUnmount:             configIGVolOpsUnmount,
+	ConfigIGVolOpsUnmountIgnoreUsed:   configIGVolOpsUnmountIgnoreUsed,
+	ConfigIGVolOpsPath:                configIGVolOpsPath,
+	ConfigIGVolOpsPathCache:           configIGVolOpsPathCache,
+	ConfigIGVolOpsCreate:              configIGVolOpsCreate,
+	ConfigIGVolOpsCreateDisable:       configIGVolOpsCreateDisable,
+	ConfigIGVolOpsCreateImplicit:      configIGVolOpsCreateImplicit,
+	ConfigIGVolOpsCreateDefault:       configIGVolOpsCreateDefault,
+	ConfigIGVolOpsCreateDefaultSize:   configIGVolOpsCreateDefaultSize,
+	ConfigIGVolOpsCreateDefaultFSType: configIGVolOpsCreateDefaultFSType,
+	ConfigIGVolOpsCreateDefaultAZ:     configIGVolOpsCreateDefaultAZ,
+	ConfigIGVolOpsCreateDefaultType:   configIGVolOpsCreateDefaultType,
+	ConfigIGVolOpsCreateDefaultIOPS:   configIGVolOpsCreateDefaultIOPS,
+	ConfigIGVolOpsRemove:              configIGVolOpsRemove,
+	ConfigIGVolOpsRemoveDisable:       configIGVolOpsRemoveDisable,
+}
+
+var configIGKeyDescs = map[ConfigKey]string{}

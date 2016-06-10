@@ -29,22 +29,24 @@ type client struct {
 // New returns a new libStorage client.
 func New(goCtx gocontext.Context, config gofig.Config) (types.Client, error) {
 
+	ctx := context.New(goCtx)
+
 	if config == nil {
 		var err error
-		if config, err = apicnfg.NewConfig(); err != nil {
+		if config, err = apicnfg.NewConfig(ctx); err != nil {
 			return nil, err
 		}
 	}
 
 	config = config.Scope(types.ConfigClient)
-	types.BackCompat(config)
+	types.BackCompat(ctx, config)
 
 	var (
 		c   *client
 		err error
 	)
 
-	c = &client{ctx: context.New(goCtx), config: config}
+	c = &client{ctx: ctx, config: config}
 	c.ctx = c.ctx.WithValue(context.ClientKey, c)
 
 	logFields := log.Fields{}
@@ -95,7 +97,7 @@ func New(goCtx gocontext.Context, config gofig.Config) (types.Client, error) {
 	}
 	c.ctx.Info("os driver initialized")
 
-	integrationDriverName := config.GetString(types.ConfigIntegrationDriver)
+	integrationDriverName := config.GetString(types.ConfigIGDriver)
 	if c.id, err = registry.NewIntegrationDriver(
 		integrationDriverName); err != nil {
 		return nil, err

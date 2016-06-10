@@ -31,11 +31,11 @@ func ParseLoggingConfig(
 	fields log.Fields,
 	roots ...string) (*LoggingConfig, error) {
 
-	f := func(k string, v interface{}) {
+	f := func(k types.ConfigKey, v interface{}) {
 		if fields == nil {
 			return
 		}
-		fields[k] = v
+		fields[k.String()] = v
 	}
 
 	logConfig := &LoggingConfig{

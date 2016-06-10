@@ -70,7 +70,7 @@ func newServer(goCtx gocontext.Context, config gofig.Config) (*server, error) {
 
 	if config == nil {
 		var err error
-		if config, err = apicnfg.NewConfig(); err != nil {
+		if config, err = apicnfg.NewConfig(ctx); err != nil {
 			return nil, err
 		}
 	}

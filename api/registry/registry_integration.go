@@ -308,21 +308,21 @@ func (d *idm) decCount(volumeName string) {
 }
 
 func (d *idm) preempt() bool {
-	return d.config.GetBool(types.ConfigIgVolOpsMountPreempt)
+	return d.config.GetBool(types.ConfigIGVolOpsMountPreempt)
 }
 
 func (d *idm) disableCreate() bool {
-	return d.config.GetBool(types.ConfigIgVolOpsCreateDisable)
+	return d.config.GetBool(types.ConfigIGVolOpsCreateDisable)
 }
 
 func (d *idm) disableRemove() bool {
-	return d.config.GetBool(types.ConfigIgVolOpsRemoveDisable)
+	return d.config.GetBool(types.ConfigIGVolOpsRemoveDisable)
 }
 
 func (d *idm) ignoreUsedCount() bool {
-	return d.config.GetBool(types.ConfigIgVolOpsUnmountIgnoreUsed)
+	return d.config.GetBool(types.ConfigIGVolOpsUnmountIgnoreUsed)
 }
 
 func (d *idm) pathCache() bool {
-	return d.config.GetBool(types.ConfigIgVolOpsPathCache)
+	return d.config.GetBool(types.ConfigIGVolOpsPathCache)
 }
