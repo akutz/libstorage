@@ -1,5 +1,5 @@
-hash: 794f4ee740f0eae62a42d92104f210d1a46f4727bbd4543fc3f41dde41fde517
-updated: 2016-07-01T13:54:05.201343222-07:00
+hash: 825cd42413a8072047ceb383045068e290cc24718b71afc06451e74eb832f307
+updated: 2016-07-18T16:05:28.364785447-05:00
 imports:
 - name: github.com/akutz/gofig
   version: 697c16916338166671910eeaccc50f21e3c10726
@@ -38,6 +38,8 @@ imports:
   repo: https://github.com/emccode/goscaleio
   subpackages:
   - types/v1
+- name: github.com/fsnotify/fsnotify
+  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: github.com/go-yaml/yaml
   version: b4a9f8c4b84c6c4256d669c649837f1441e4b050
   repo: https://github.com/akutz/yaml.git
@@ -45,6 +47,17 @@ imports:
   version: aed02d124ae4a0e94fea4541c8effd05bf0c8296
 - name: github.com/gorilla/mux
   version: 9fa818a44c2bf1396a17f9d5a3c0f6dd39d2ff8e
+- name: github.com/hashicorp/hcl
+  version: d8c773c4cba11b11539e3d45f93daeaa5dcf1fa1
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/token
+  - json/parser
+  - hcl/scanner
+  - hcl/strconv
+  - json/scanner
+  - json/token
 - name: github.com/jteeuwen/go-bindata
   version: 1dd44b25b79c4d9060e582e90798e4d72537818c
   repo: https://github.com/akutz/go-bindata
@@ -52,10 +65,6 @@ imports:
   version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
   repo: https://github.com/kardianos/osext.git
   vcs: git
-- name: github.com/kr/pretty
-  version: add1dbc86daf0f983cd4a48ceb39deb95c729b67
-- name: github.com/kr/text
-  version: 7cafcd837844e784b526369c9bce262804aebc60
 - name: github.com/magiconair/properties
   version: c265cfa48dda6474e208715ca93e987829f572f8
 - name: github.com/mitchellh/mapstructure
@@ -75,8 +84,7 @@ imports:
   version: b084184666e02084b8ccb9b704bf0d79c466eb1d
   repo: https://github.com/spf13/pflag
 - name: github.com/spf13/viper
-  version: 317ec73d0d7507658ee3be15866b445d6d921848
-  repo: https://github.com/akutz/viper.git
+  version: c1ccc378a054ea8d4e38d8c67f6938d4760b53dd
 - name: github.com/stretchr/testify
   version: d77da356e56a7428ad25149ca77381849a6a5232
   subpackages:
@@ -90,8 +98,6 @@ imports:
   version: 62bee037599929a6e9146f29d10dd5208c43507d
   subpackages:
   - unix
-- name: gopkg.in/fsnotify.v1
-  version: a8a77c9133d2d6fd8334f3260d06f60e8d80a5fb
 - name: gopkg.in/yaml.v1
   version: b4a9f8c4b84c6c4256d669c649837f1441e4b050
   repo: https://github.com/akutz/yaml.git
