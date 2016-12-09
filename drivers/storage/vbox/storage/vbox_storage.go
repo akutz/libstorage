@@ -24,7 +24,6 @@ import (
 type driver struct {
 	sync.Mutex
 	config gofig.Config
-	vbox   *vboxc.VirtualBox
 }
 
 func init() {
@@ -43,7 +42,6 @@ func (d *driver) Name() string {
 // Init initializes the driver.
 func (d *driver) Init(ctx types.Context, config gofig.Config) error {
 	d.config = config
-
 	fields := map[string]interface{}{
 		"provider":        vbox.Name,
 		"moduleName":      vbox.Name,
@@ -54,24 +52,30 @@ func (d *driver) Init(ctx types.Context, config gofig.Config) error {
 		"controllerName":  d.controllerName(),
 		"machineNameOrId": d.machineNameID(""),
 	}
-
-	ctx.Info("initializing driver: ", fields)
-	d.vbox = vboxc.New(d.username(), d.password(),
-		d.endpoint(), d.tls(), d.controllerName())
-
-	if err := d.vbox.Logon(); err != nil {
-		return goof.WithFieldsE(fields,
-			"error logging in", err)
-	}
-
 	ctx.WithFields(fields).Info("storage driver initialized")
 	return nil
+}
+
+func (d *driver) Login(ctx types.Context) (interface{}, error) {
+	svc := vboxc.New(
+		d.username(),
+		d.password(),
+		d.endpoint(),
+		d.tls(),
+		d.controllerName())
+	if err := svc.Logon(); err != nil {
+		return err, goof.WithError("error logging into vbox", err)
+	}
+	return svc, nil
+}
+
+func mustSession(ctx types.Context) *vboxc.VirtualBox {
+	return context.MustSession(ctx).(*vboxc.VirtualBox)
 }
 
 // LocalDevices returns a map of the system's local devices.
 func (d *driver) LocalDevices(
 	ctx types.Context, opts types.Store) (*types.LocalDevices, error) {
-
 	if ld, ok := context.LocalDevices(ctx); ok {
 		return ld, nil
 	}
@@ -104,11 +108,11 @@ func (d *driver) InstanceInspect(
 
 	iid := context.MustInstanceID(ctx)
 	if iid.ID != "" {
-		return &types.Instance{InstanceID: iid}, nil
-	}
-
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, err
+		return &types.Instance{
+			Name:         iid.ID,
+			InstanceID:   iid,
+			ProviderName: iid.Driver,
+		}, nil
 	}
 
 	var macAddrs []string
@@ -116,17 +120,20 @@ func (d *driver) InstanceInspect(
 		return nil, err
 	}
 
-	var (
-		m   *vboxc.Machine
-		err error
-	)
+	svcObj, err := d.Login(ctx)
+	if err != nil {
+		return nil, err
+	}
+	svc, ok := svcObj.(*vboxc.VirtualBox)
+	if !ok {
+		return nil, goof.New("invalid service type")
+	}
+	ctx = context.WithValue(ctx, context.SessionKey, svc)
 
+	var m *vboxc.Machine
 	if m, err = d.findMachineByMacAddrs(ctx, macAddrs); err != nil {
-
 		nameOrID := d.config.GetString("virtualbox.localMachineNameOrId")
-
 		if m, err = d.findMachineByNameOrID(ctx, nameOrID); err != nil {
-
 			return nil, goof.WithFieldsE(
 				log.Fields{
 					"macAddres":                       macAddrs,
@@ -140,10 +147,12 @@ func (d *driver) InstanceInspect(
 	}
 
 	return &types.Instance{
+		Name: m.ID,
 		InstanceID: &types.InstanceID{
 			ID:     m.ID,
 			Driver: vbox.Name,
 		},
+		ProviderName: vbox.Name,
 	}, nil
 }
 
@@ -160,10 +169,14 @@ func (d *driver) getVolumeMapping(ctx types.Context) ([]*types.Volume, error) {
 
 	m, err = d.findMachineByInstanceID(ctx, iid)
 	if err != nil {
+		ctx.WithField(
+			"iid", iid.ID).WithError(
+			err).Error("error finding machine by instance ID")
 		return nil, err
 	}
 
 	if err := m.Refresh(); err != nil {
+		ctx.WithError(err).Error("error refreshing machine ref")
 		return nil, err
 	}
 	defer m.Release()
@@ -176,40 +189,72 @@ func (d *driver) getVolumeMapping(ctx types.Context) ([]*types.Volume, error) {
 
 	mas, err = m.GetMediumAttachments()
 	if err != nil {
+		ctx.WithError(err).Error("error getting medium attachments")
 		return nil, err
 	}
 
-	var blockDevices []*types.Volume
-	for _, ma := range mas {
-		medium := d.vbox.NewMedium(ma.Medium)
+	processMediumAttachment := func(
+		ctx types.Context,
+		svc *vboxc.VirtualBox,
+		ma *vboxw.IMediumAttachment) (*types.Volume, bool, error) {
+
+		ctx.WithFields(log.Fields{
+			"moref":      ma.Medium,
+			"controller": ma.Controller,
+			"device":     ma.Device,
+			"port":       ma.Port,
+			"type":       ma.Type_,
+		}).Debug("processing medium")
+
+		medium := svc.NewMedium(ma.Medium)
 		defer medium.Release()
 
 		mid, err := medium.GetID()
 		if err != nil {
-			return nil, err
+			ctx.WithError(err).Error("error getting medium ID")
+			return nil, false, err
 		}
+		ctx.WithField("id", mid).Debug("processing medium")
+
 		smid := strings.Split(mid, "-")
 		if len(smid) == 0 {
-			continue
+			return nil, true, nil
 		}
 
 		location, err := medium.GetLocation()
 		if err != nil {
-			return nil, err
+			ctx.WithError(err).Error("error getting medium location")
+			return nil, false, err
 		}
+		ctx.WithField("location", location).Debug("processing medium")
 
 		var bdn string
 		var ok bool
 		if bdn, ok = mapDiskByID[smid[0]]; !ok {
-			continue
+			return nil, true, nil
 		}
-		sdBlockDevice := &types.Volume{
+
+		return &types.Volume{
 			Name:   bdn,
 			ID:     mid,
 			Status: location,
-		}
-		blockDevices = append(blockDevices, sdBlockDevice)
+		}, false, nil
+	}
 
+	var (
+		svc          = mustSession(ctx)
+		blockDevices []*types.Volume
+	)
+
+	for _, ma := range mas {
+		vol, cont, err := processMediumAttachment(ctx, svc, ma)
+		if err != nil {
+			return nil, err
+		}
+		if cont {
+			continue
+		}
+		blockDevices = append(blockDevices, vol)
 	}
 	return blockDevices, nil
 }
@@ -220,9 +265,6 @@ func (d *driver) VolumeCreate(ctx types.Context, volumeName string,
 
 	d.Lock()
 	defer d.Unlock()
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, err
-	}
 
 	if opts.Size == nil {
 		return nil, goof.New("missing volume size")
@@ -298,16 +340,13 @@ func (d *driver) VolumeRemove(
 
 	d.Lock()
 	defer d.Unlock()
-	if err := d.refreshSession(ctx); err != nil {
-		return err
-	}
 
 	fields := map[string]interface{}{
 		"provider": vbox.Name,
 		"volumeID": volumeID,
 	}
 
-	err := d.vbox.RemoveMedium(volumeID)
+	err := mustSession(ctx).RemoveMedium(volumeID)
 	if err != nil {
 		return goof.WithFieldsE(fields, "error deleting volume", err)
 	}
@@ -320,10 +359,6 @@ func (d *driver) VolumeAttach(
 	ctx types.Context,
 	volumeID string,
 	opts *types.VolumeAttachOpts) (*types.Volume, string, error) {
-
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, "", err
-	}
 
 	if volumeID == "" {
 		return nil, "", goof.New("missing volume id")
@@ -378,10 +413,6 @@ func (d *driver) VolumeDetach(
 	ctx types.Context,
 	volumeID string,
 	opts *types.VolumeDetachOpts) (*types.Volume, error) {
-
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, err
-	}
 
 	if volumeID == "" {
 		return nil, goof.New("missing volume id")
@@ -449,10 +480,6 @@ func (d *driver) Volumes(
 	ctx types.Context,
 	opts *types.VolumesOpts) ([]*types.Volume, error) {
 
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, err
-	}
-
 	vols, err := d.getVolume(ctx, "", "", opts.Attachments)
 	if err != nil {
 		return nil, err
@@ -464,10 +491,6 @@ func (d *driver) VolumeInspect(
 	ctx types.Context,
 	volumeID string,
 	opts *types.VolumeInspectOpts) (*types.Volume, error) {
-
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, err
-	}
 
 	vols, err := d.getVolume(ctx, volumeID, "", opts.Attachments)
 	if err != nil {
@@ -485,11 +508,7 @@ func (d *driver) getVolume(
 	volumeID string, volumeName string,
 	attachments types.VolumeAttachmentsTypes) ([]*types.Volume, error) {
 
-	if err := d.refreshSession(ctx); err != nil {
-		return nil, err
-	}
-
-	volumes, err := d.vbox.GetMedium(volumeID, volumeName)
+	volumes, err := mustSession(ctx).GetMedium(volumeID, volumeName)
 	if err != nil {
 		return nil, err
 	}
@@ -550,16 +569,16 @@ func (d *driver) getVolume(
 func (d *driver) findMachineByInstanceID(
 	ctx types.Context,
 	iid *types.InstanceID) (*vboxc.Machine, error) {
-
 	return d.findMachineByNameOrID(ctx, iid.ID)
 }
 
 func (d *driver) findMachineByNameOrID(
-	ctx types.Context, nameOrID string) (*vboxc.Machine, error) {
+	ctx types.Context,
+	nameOrID string) (*vboxc.Machine, error) {
 
 	ctx.WithField("nameOrID", nameOrID).Debug("finding local machine")
 
-	m, err := d.vbox.FindMachine(nameOrID)
+	m, err := mustSession(ctx).FindMachine(nameOrID)
 	if err != nil {
 		return nil, err
 	}
@@ -583,8 +602,8 @@ func (d *driver) findMachineByNameOrID(
 }
 
 func (d *driver) findMachineByMacAddrs(
-	ctx types.Context, macAddrs []string) (*vboxc.Machine, error) {
-
+	ctx types.Context,
+	macAddrs []string) (*vboxc.Machine, error) {
 	ctx.WithField("macAddrs", macAddrs).Debug("finding local machine")
 
 	macMap := make(map[string]bool)
@@ -593,12 +612,14 @@ func (d *driver) findMachineByMacAddrs(
 		macMap[macUp] = true
 	}
 
-	machines, err := d.vbox.GetMachines()
+	svc := mustSession(ctx)
+
+	machines, err := svc.GetMachines()
 	if err != nil {
 		return nil, err
 	}
 
-	sp, err := d.vbox.GetSystemProperties()
+	sp, err := svc.GetSystemProperties()
 	if err != nil {
 		return nil, err
 	}
@@ -648,11 +669,6 @@ func (d *driver) findMachineByMacAddrs(
 	return nil, goof.New("unable to find machine")
 }
 
-// TODO too costly, need better way to validate session (i.e. some delay)
-func (d *driver) refreshSession(ctx types.Context) error {
-	return d.vbox.Logon()
-}
-
 func (d *driver) createVolume(
 	ctx types.Context, name string, size int64) (*vboxc.Medium, error) {
 
@@ -661,7 +677,7 @@ func (d *driver) createVolume(
 	}
 	path := filepath.Join(d.volumePath(), name)
 	ctx.WithField("path", path).Debug("creating vmdk")
-	return d.vbox.CreateMedium("vmdk", path, size)
+	return mustSession(ctx).CreateMedium("vmdk", path, size)
 }
 
 func (d *driver) attachVolume(
@@ -679,7 +695,7 @@ func (d *driver) attachVolume(
 	}
 	defer m.Release()
 
-	medium, err := d.vbox.GetMedium(volumeID, volumeName)
+	medium, err := mustSession(ctx).GetMedium(volumeID, volumeName)
 	if err != nil {
 		return err
 	}
@@ -713,7 +729,7 @@ func (d *driver) detachVolume(
 	}
 	defer m.Release()
 
-	media, err := d.vbox.GetMedium(volumeID, volumeName)
+	media, err := mustSession(ctx).GetMedium(volumeID, volumeName)
 	if err != nil {
 		return err
 	}
