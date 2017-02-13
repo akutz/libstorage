@@ -1,8 +1,8 @@
-hash: 626a0c16518d722d7925eeb2e610cd5f565c2160072414a99b4e1067aac5685a
-updated: 2017-02-13T10:56:51.332372709-07:00
+hash: ba391adbccda43b43812c633d8423a72e769887a4561c0f250288b4c5fa6b8ac
+updated: 2017-02-13T16:15:39.206071948-06:00
 imports:
 - name: cloud.google.com/go
-  version: b4ca3d4ba32e251f6fee7bda65c5727ccbf3faa9
+  version: 493be1e01d757f0367be406d775bd51a391fc84d
   subpackages:
   - compute/metadata
   - internal
@@ -86,6 +86,8 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/digitalocean/godo
+  version: 2ff8a02a86cd6918b384a5000ceebe886844fbce
 - name: github.com/fsnotify/fsnotify
   version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
 - name: github.com/go-ini/ini
@@ -94,6 +96,10 @@ imports:
   version: 8ee79997227bf9b34611aee7946ae64735e6fd93
   subpackages:
   - proto
+- name: github.com/google/go-querystring
+  version: 53e6ce116135b80d037921a7fdd5138cf32d7a8a
+  subpackages:
+  - query
 - name: github.com/googleapis/gax-go
   version: da06d194a00e19ce00d9011a13931c3f6f6887c7
 - name: github.com/gorilla/context
@@ -173,6 +179,8 @@ imports:
   version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
   subpackages:
   - assert
+- name: github.com/tent/http-link-go
+  version: ac974c61c2f990f4115b119354b5e0b47550e888
 - name: golang.org/x/crypto
   version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
   subpackages:
@@ -216,7 +224,7 @@ imports:
   - googleapi
   - googleapi/internal/uritemplates
 - name: google.golang.org/appengine
-  version: 8758a385849434ba5eac8aeedcf5192c5a0f5f10
+  version: 2e4a801b39fc199db615bfca7d0b9f8cd9580599
   subpackages:
   - internal
   - internal/app_identity
@@ -228,7 +236,7 @@ imports:
   - internal/urlfetch
   - urlfetch
 - name: google.golang.org/grpc
-  version: 50955793b0183f9de69bd78e2ec251cf20aab121
+  version: 4acc9108c18937815db3306a66990869d22aa980
   subpackages:
   - codes
   - credentials
