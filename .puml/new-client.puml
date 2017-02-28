@@ -1,0 +1,54 @@
+@startuml
+
+start
+:""import "github.com/codedellemc/libstorage/client";"";
+note right
+    Importing the ""client"" package causes the
+    ""github.com/codedellemc/libstorage/imports/local""
+    package to be loaded as well. This package is
+    responsible for loading all of the packages that
+    use their ""init"" functions to register drivers
+    with the service registry.
+end note
+
+:client.New(ctx, config);
+
+if (config == nil) then (true)
+note right
+    ""apicnfg "github.com/codedellemc/libstorage/api/utils/config"""
+    ====
+    Create a new configuration instance if the one passed into
+    the ""New"" function is nil.
+end note
+    :config = apicnfg.NewConfig();
+endif
+
+:config = config.Scope("libstorage.client");
+note right
+    Create a scoped version of the configuration
+    object. This means that an attempt to retrieve
+    the property ""libstorage.host"" will first
+    be directed to retrieve
+    ""libstorage.client.libstorage.host"" and,
+    if not discovered, ""libstorage.host"".
+end note
+
+:logConfig := utils.ParseLoggingConfig(config);
+note right
+    ""github.com/codedellemc/libstorage/api/utils""
+    ====
+    Parse the logging configuration from the config
+    object using the ""ParseLoggingConfig"" function
+    from the ""utils"" package.
+end note
+
+:ctx = context.SetLogLevel(ctx, logConfig.Level);
+note right
+    ""github.com/codedellemc/libstorage/api/context""
+    ====
+    Update the context with the configured log level.
+end note
+
+stop
+
+@enduml
