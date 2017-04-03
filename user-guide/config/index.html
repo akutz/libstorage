@@ -925,22 +925,22 @@ libStorage API to the bearer token from above:</p>
   server:
     tokens:
       key: MySuperSecretSigningKey
-      valid:
+      allow:
       - akutz
-      invalid:
+      deny:
       - cduchesne
 </code></pre>
 
 <p>The above configuration snippet defines a new property,
 <code>libstorage.server.tokens</code>. This property contains three child properties:
-<code>key</code>, <code>valid</code>, and <code>invalid</code>.</p>
+<code>key</code>, <code>allow</code>, and <code>deny</code>.</p>
 <p>The property <code>libstorage.server.tokens.key</code> is the secret key used to verify
 the signatures of the tokens included in API calls. If the property's value
 is a valid file path then the contents of the file are used as the key.</p>
-<p>Both the properties <code>libstorage.server.tokens.valid</code> and
-<code>libstorage.server.tokens.invalid</code> are arrays of strings. The values can be
-either the subject of the token or the complete JWT. The <code>valid</code> property
-indicates which tokens are valid and the <code>invalid</code> property is a way to
+<p>Both the properties <code>libstorage.server.tokens.allow</code> and
+<code>libstorage.server.tokens.deny</code> are arrays of strings. The values can be
+either the subject of the token or the complete JWT. The <code>allow</code> property
+indicates which tokens are valid and the <code>deny</code> property is a way to
 explicitly revoke access.</p>
 <div class="admonition note">
 <p class="admonition-title">note</p>
@@ -957,9 +957,9 @@ to a boolean true value:</p>
     tokens:
       disabled: true
       key:      MySuperSecretSigningKey
-      valid:
+      allow:
       - akutz
-      invalid:
+      deny:
       - cduchesne
 </code></pre>
 
@@ -973,7 +973,7 @@ This section reviews service-level token configurations.</p>
         driver: ebs
         tokens:
           key: MySuperSecretSigningKey
-          valid:
+          allow:
           - akutz
       ebs-01:
         driver: ebs
@@ -997,10 +997,10 @@ of which to be aware when doing so.</p>
 <li>When combining global and service token configurations, only the global
 token key is respected. Otherwise tokens would always be invalid either at
 the global or service scope since a token is signed by a single key.</li>
-<li>The global <code>valid</code> list grants access globally but can be overridden by
-including a token in a service's <code>invalid</code> list.</li>
-<li>The global <code>invalid</code> list restricts access globally and cannot be overridden
-by including a token in a service's <code>valid</code> list.</li>
+<li>The global <code>allow</code> list grants access globally but can be overridden by
+including a token in a service's <code>deny</code> list.</li>
+<li>The global <code>deny</code> list restricts access globally and cannot be overridden
+by including a token in a service's <code>allow</code> list.</li>
 </ul>
 <h3 id="embedded-configuration">Embedded Configuration<a class="headerlink" href="#embedded-configuration" title="Permanent link">&para;</a></h3>
 <p>If <code>libStorage</code> is embedded into another application, such as
