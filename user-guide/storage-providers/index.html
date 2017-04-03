@@ -37,7 +37,7 @@
 
     </head>
 
-    <body>
+    <body >
 
         <div class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container">
@@ -165,6 +165,12 @@
             
             
             
+                <li >
+                    <a href="../../api/">API</a>
+                </li>
+            
+            
+            
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
                     <ul class="dropdown-menu">
@@ -244,6 +250,7 @@
         </div>
     </div>
 </div>
+        
         <div class="container ">
             <div class="col-md-3"><div id="sidenav" class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
@@ -1529,6 +1536,21 @@ with the name of the controller you wish to use.  The port count must be set
 manually as it cannot be increased when the VMs are on.  A count of <code>30</code>
 is suggested.</p>
 <p>VirtualBox 5.0.10+ must be used.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For a VirtualBox VM to work successfully, the following three points are of
+the utmost importance:</p>
+<ol>
+<li>The SATA controller should be named <code>SATA</code>.</li>
+<li>The SATA controller's port count must allow for additional
+connections.</li>
+<li>The MAC address must not match that of any other VirtualBox VM's
+MAC addresses or the MAC address of the host.</li>
+</ol>
+<p>The REX-Ray <code>Vagrantfile</code> has
+<a href="https://github.com/codedellemc/rexray/blob/master/Vagrantfile#L166-L179">a section</a>
+that automatically configures these options.</p>
+</div>
 <h3 id="configuration_10">Configuration<a class="headerlink" href="#configuration_10" title="Permanent link">&para;</a></h3>
 <p>The following is an example configuration of the VirtualBox driver.<br />
 The <code>localMachineNameOrId</code> parameter is for development use where you force
@@ -1572,6 +1594,7 @@ using <code>virtualbox</code> as the driver name.</p>
 <li>The driver supports VirtualBox 5.0.10+</li>
 </ul></div>
         </div>
+        
 
         <script src="../../js/jquery-1.10.2.min.js"></script>
         <script src="../../js/bootstrap-3.0.3.min.js"></script>
@@ -1583,6 +1606,7 @@ using <code>virtualbox</code> as the driver name.</p>
         <script src="../../.themes/yeti/js/highlight.pack.js"></script>
         <script src="../../.themes/yeti/js/jquery-1.10.2.min.js"></script>
         -->
+
     </body>
 
 </html>

@@ -37,7 +37,7 @@
 
     </head>
 
-    <body>
+    <body >
 
         <div class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container">
@@ -165,6 +165,12 @@
             
             
             
+                <li >
+                    <a href="../../api/">API</a>
+                </li>
+            
+            
+            
                 <li class="dropdown">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">About <b class="caret"></b></a>
                     <ul class="dropdown-menu">
@@ -244,6 +250,7 @@
         </div>
     </div>
 </div>
+        
         <div class="container ">
             <div class="col-md-3"><div id="sidenav" class="bs-sidebar hidden-print affix well" role="complementary">
     <ul class="nav bs-sidenav">
@@ -301,6 +308,36 @@
             <li><a href="#advanced-configuration">Advanced Configuration</a>
             
                 <ul class="nav nav-stacked">
+                
+                <li><a href="#tls-configuration">TLS Configuration</a><!--
+                
+                <ul class="nav nav-stacked">
+                    
+                    <li><a href="#insecure-tls">Insecure TLS</a></li>
+                    
+                    <li><a href="#server-cert-fingerprint">Server Cert Fingerprint</a></li>
+                    
+                    <li><a href="#trusted-certs-file">Trusted Certs File</a></li>
+                    
+                    <li><a href="#require-client-side-certs">Require Client-Side Certs</a></li>
+                    
+                </ul>
+                -->
+                </li>
+                
+                <li><a href="#security-tokens">Security Tokens</a><!--
+                
+                <ul class="nav nav-stacked">
+                    
+                    <li><a href="#global-configuration">Global Configuration</a></li>
+                    
+                    <li><a href="#service-configuration">Service Configuration</a></li>
+                    
+                    <li><a href="#global-vs-service">Global vs. Service</a></li>
+                    
+                </ul>
+                -->
+                </li>
                 
                 <li><a href="#embedded-configuration">Embedded Configuration</a><!--
                 -->
@@ -371,6 +408,16 @@
                     <li><a href="#volume-path-cache">Volume Path Cache</a></li>
                     
                     <li><a href="#volume-root-path">Volume Root Path</a></li>
+                    
+                </ul>
+                -->
+                </li>
+                
+                <li><a href="#rest-configuration">REST Configuration</a><!--
+                
+                <ul class="nav nav-stacked">
+                    
+                    <li><a href="#parse-post-options">Parse POST Options</a></li>
                     
                 </ul>
                 -->
@@ -483,16 +530,11 @@ encrypt communications between client and server.</p>
 <pre><code class="yaml">libstorage:
   host: tcp://127.0.0.1:7979
   client:
-    tls:
-      certFile: $HOME/.libstorage/libstorage-client.crt
-      keyFile: $HOME/.libstorage/libstorage-client.key
-      trustedCertsFile: $HOME/.libstorage/trusted-certs.crt
+    tls: true
   server:
     tls:
       certFile: /etc/libstorage/libstorage-server.crt
       keyFile: /etc/libstorage/libstorage-server.key
-      trustedCertsFile: /etc/libstorage/trusted-certs.crt
-      clientCertRequired: true
     services:
       virtualbox:
         driver: virtualbox
@@ -503,10 +545,13 @@ encrypt communications between client and server.</p>
           controllerName: SATA
 </code></pre>
 
-<p>Please note that in the above example the property <code>libstorage.client</code> has been
-introduced. This property is always present, even if not explicitly specified.
-It exists to override <code>libStorage</code> properties for the client only, such as TLS
-settings, logging, etc.</p>
+<div class="admonition note">
+<p class="admonition-title">note</p>
+<p>Please note that in the above example the property <code>libstorage.client</code> has
+been introduced. This property is always present, even if not explicitly
+specified. It exists to override <code>libStorage</code> properties for the client
+only, such as TLS settings, logging, etc.</p>
+</div>
 <h3 id="unix-socket">UNIX Socket<a class="headerlink" href="#unix-socket" title="Permanent link">&para;</a></h3>
 <p>For the security conscious, there is no safer way to run a client/server setup
 on a single system than the option to use a UNIX socket. The socket offloads
@@ -707,6 +752,256 @@ and a more verbose, <code>info</code> log level for just the server.</p>
 <h2 id="advanced-configuration">Advanced Configuration<a class="headerlink" href="#advanced-configuration" title="Permanent link">&para;</a></h2>
 <p>The following sections detail every last aspect of how <code>libStorage</code> works and can
 be configured.</p>
+<h3 id="tls-configuration">TLS Configuration<a class="headerlink" href="#tls-configuration" title="Permanent link">&para;</a></h3>
+<p>This section reviews the several supported TLS configuration options.</p>
+<h4 id="insecure-tls">Insecure TLS<a class="headerlink" href="#insecure-tls" title="Permanent link">&para;</a></h4>
+<p>The following example illustrates how to configure the libStorage client to
+skip validation of a provided server-side certificate:</p>
+<pre><code class="yaml">libstorage:
+  host: tcp://127.0.0.1:7979
+  client:
+    tls: insecure
+  server:
+    tls:
+      certFile: /etc/libstorage/libstorage-server.crt
+      keyFile: /etc/libstorage/libstorage-server.key
+    services:
+      virtualbox:
+        driver: virtualbox
+        virtualbox:
+          endpoint:       http://10.0.2.2:18083
+          tls:            false
+          volumePath:     $HOME/VirtualBox/Volumes
+          controllerName: SATA
+</code></pre>
+
+<div class="admonition note">
+<p class="admonition-title">note</p>
+<p>The above example instructs the client-side TLS configuration to operate in
+<em>insecure</em> mode. This means the client is not attempting to verify the
+certificate provided by the server. This is a security risk and should not
+ever be used in production.</p>
+</div>
+<h4 id="server-cert-fingerprint">Server Cert Fingerprint<a class="headerlink" href="#server-cert-fingerprint" title="Permanent link">&para;</a></h4>
+<p>While TLS should never be configured as insecure in production, a compromise
+between no TLS and insecure TLS is specifying a server certificate's SHA256
+fingerprint.</p>
+<p>For example, the following command can be used to print google.com's SHA256
+fingerprint:</p>
+<pre><code class="bash">$ openssl s_client -connect google.com:443  &lt;/dev/null | \
+  sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | \
+  openssl x509 -noout -fingerprint -sha256
+</code></pre>
+
+<p>The above command will produce output similar to the following:</p>
+<pre><code class="bash">depth=2 /C=US/O=GeoTrust Inc./CN=GeoTrust Global CA
+verify error:num=20:unable to get local issuer certificate
+verify return:0
+DONE
+SHA256 Fingerprint=15:92:77:BE:6C:90:D3:FB:59:29:9C:51:A7:DB:5C:16:55:BD:B9:9E:E7:7E:C1:9B:30:C3:74:99:21:5F:08:99
+</code></pre>
+
+<p>Using the above output, it's possible to configure a libStorage client to
+communicate to a remote, libStorage API endpoint using TLS if, and only if,
+the fingerprint of remote endpoint's certificate matches the one the client
+expects. The following configuration achieves just that:</p>
+<pre><code class="yaml">libstorage:
+  host: tcp://127.0.0.1:7979
+  client:
+    tls: &quot;sha256:15:92:77:BE:6C:90:D3:FB:59:29:9C:51:A7:DB:5C:16:55:BD:B9:9E:E7:7E:C1:9B:30:C3:74:99:21:5F:08:99&quot;
+  server:
+    tls:
+      certFile: /etc/libstorage/libstorage-server.crt
+      keyFile: /etc/libstorage/libstorage-server.key
+    services:
+      virtualbox:
+        driver: virtualbox
+        virtualbox:
+          endpoint:       http://10.0.2.2:18083
+          tls:            false
+          volumePath:     $HOME/VirtualBox/Volumes
+          controllerName: SATA
+</code></pre>
+
+<p>With <code>DEBUG</code> level logging enabled, the libStorage client logs reflect the
+matched fingerprint:</p>
+<pre><code class="bash">DEBU[0000] comparing tls fingerprints                    actualFingerprint=159277be6c90d3fb59299c51a7db5c1655bdb99ee77ec19b30c37499215f0899 expectedFingerprint=159277be6c90d3fb59299c51a7db5c1655bdb99ee77ec19b30c37499215f0899 service=virtualbox storageDriver=libstorage time=1488821773182
+DEBU[0000] matched tls fingerprints                      actualFingerprint=159277be6c90d3fb59299c51a7db5c1655bdb99ee77ec19b30c37499215f0899 expectedFingerprint=159277be6c90d3fb59299c51a7db5c1655bdb99ee77ec19b30c37499215f0899 service=virtualbox storageDriver=libstorage time=1488821773182
+</code></pre>
+
+<h4 id="trusted-certs-file">Trusted Certs File<a class="headerlink" href="#trusted-certs-file" title="Permanent link">&para;</a></h4>
+<p>This TLS configuration example describes how to instruct the libStorage client
+to validate the provided server-side certificate using a custom trusted CA file.
+This avoids the perils of insecure TLS while still enabling a privately signed
+or snake-oil server-side certificate.</p>
+<pre><code class="yaml">libstorage:
+  host: tcp://127.0.0.1:7979
+  client:
+    tls:
+      trustedCertsFile: $HOME/.libstorage/trusted-certs.crt
+  server:
+    tls:
+      certFile: /etc/libstorage/libstorage-server.crt
+      keyFile: /etc/libstorage/libstorage-server.key
+    services:
+      virtualbox:
+        driver: virtualbox
+        virtualbox:
+          endpoint:       http://10.0.2.2:18083
+          tls:            false
+          volumePath:     $HOME/VirtualBox/Volumes
+          controllerName: SATA
+</code></pre>
+
+<h4 id="require-client-side-certs">Require Client-Side Certs<a class="headerlink" href="#require-client-side-certs" title="Permanent link">&para;</a></h4>
+<p>The final TLS example explains how to configure the libStorage server to
+to require certificates from clients. This configuration enables the use of
+client-side certificates as a means of authorization.</p>
+<pre><code class="yaml">libstorage:
+  host: tcp://127.0.0.1:7979
+  client:
+    tls:
+      certFile: $HOME/.libstorage/libstorage-client.crt
+      keyFile: $HOME/.libstorage/libstorage-client.key
+      trustedCertsFile: $HOME/.libstorage/trusted-certs.crt
+  server:
+    tls:
+      certFile: /etc/libstorage/libstorage-server.crt
+      keyFile: /etc/libstorage/libstorage-server.key
+      trustedCertsFile: /etc/libstorage/trusted-certs.crt
+      clientCertRequired: true
+    services:
+      virtualbox:
+        driver: virtualbox
+        virtualbox:
+          endpoint:       http://10.0.2.2:18083
+          tls:            false
+          volumePath:     $HOME/VirtualBox/Volumes
+          controllerName: SATA
+</code></pre>
+
+<p>A typical scenario that employs the above example would also involve the
+server certificate to have a dual purpose as an intermediate signing authority
+that has signed the allowed client certificates. Or at the very least the
+server certificate would be signed by the same intermediate CA that is used
+to sign the client-side certs.</p>
+<h3 id="security-tokens">Security Tokens<a class="headerlink" href="#security-tokens" title="Permanent link">&para;</a></h3>
+<p>In addition to TLS, the libStorage API includes support for
+<a href="https://jwt.io">JSON Web Tokens</a> (JWT) in order to increase security and
+decrease possible attack vectors.</p>
+<p>A JWT is transmitted along with an API call in the standard HTTP <code>Authorization</code>
+header as an OAuth 2.0 <a href="https://tools.ietf.org/html/rfc6750">Bearer</a> token. For
+example:</p>
+<pre><code>GET /volumes
+
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2ODg1NTAsImlhdCI6MTQ5MTIzODk1MCwibmJmIjoxNDkxMjM4OTUwLCJzdWIiOiJha3V0eiJ9.3eAA7AQZUGrwA42H64qKbu8QF_AHpSsJSMR0FALnKj8
+</code></pre>
+
+<p>The above token is split into three discreet parts:</p>
+<p><code>HEADER</code>.<code>PAYLOAD</code>.<code>SIGNATURE</code></p>
+<p>The decoded header is:</p>
+<pre><code class="json">{
+  &quot;alg&quot;: &quot;HS256&quot;,
+  &quot;typ&quot;: &quot;JWT&quot;
+}
+</code></pre>
+
+<p>The decoded payload is:</p>
+<pre><code class="json">{
+  &quot;exp&quot;: 1522688550,
+  &quot;iat&quot;: 1491238950,
+  &quot;nbf&quot;: 1491238950,
+  &quot;sub&quot;: &quot;akutz&quot;
+}
+</code></pre>
+
+<p>The signature is the result of signing the concatenation of the header and
+signature after Base64 encoding them both.</p>
+<h4 id="global-configuration">Global Configuration<a class="headerlink" href="#global-configuration" title="Permanent link">&para;</a></h4>
+<p>It's possible to provision access to the libStorage API both globally and per
+service. For example, the below configuration restricts all access to the
+libStorage API to the bearer token from above:</p>
+<pre><code class="yaml">libstorage:
+  server:
+    tokens:
+      key: MySuperSecretSigningKey
+      valid:
+      - akutz
+      invalid:
+      - cduchesne
+</code></pre>
+
+<p>The above configuration snippet defines a new property,
+<code>libstorage.server.tokens</code>. This property contains three child properties:
+<code>key</code>, <code>valid</code>, and <code>invalid</code>.</p>
+<p>The property <code>libstorage.server.tokens.key</code> is the secret key used to verify
+the signatures of the tokens included in API calls. If the property's value
+is a valid file path then the contents of the file are used as the key.</p>
+<p>Both the properties <code>libstorage.server.tokens.valid</code> and
+<code>libstorage.server.tokens.invalid</code> are arrays of strings. The values can be
+either the subject of the token or the complete JWT. The <code>valid</code> property
+indicates which tokens are valid and the <code>invalid</code> property is a way to
+explicitly revoke access.</p>
+<div class="admonition note">
+<p class="admonition-title">note</p>
+<p>Please be aware that by virtue of defining the property
+<code>libstorage.server.tokens</code> access to the server is restricted to
+requests with valid tokens only and anonymous access is no longer allowed.</p>
+</div>
+<p>There may be occasions when it is necessary to temporarily disable token-based
+access restrictions. It's possible to do this without removing the token
+configuration using setting the property <code>libstorage.server.tokens.disabled</code>
+to a boolean true value:</p>
+<pre><code class="yaml">libstorage:
+  server:
+    tokens:
+      disabled: true
+      key:      MySuperSecretSigningKey
+      valid:
+      - akutz
+      invalid:
+      - cduchesne
+</code></pre>
+
+<h4 id="service-configuration">Service Configuration<a class="headerlink" href="#service-configuration" title="Permanent link">&para;</a></h4>
+<p>The previous section described how to restrict access at the global level.
+This section reviews service-level token configurations.</p>
+<pre><code class="yaml">libstorage:
+  server:
+    services:
+      ebs-00:
+        driver: ebs
+        tokens:
+          key: MySuperSecretSigningKey
+          valid:
+          - akutz
+      ebs-01:
+        driver: ebs
+</code></pre>
+
+<p>The above configuration defines a token configuration for the service <code>ebs-00</code>
+but <strong>not</strong> the service <code>ebs-01</code>. That means that API calls to the resource
+<code>/volumes/ebs-00</code> require a valid token whereas API calls to the resource
+<code>/volumes/ebs-01</code> do not.</p>
+<div class="admonition note">
+<p class="admonition-title">note</p>
+<p>If an API call without a token is submitted that acts on multiple
+resources and one or more of those resources is configured for token-based
+access then the call  will result in an HTTP status of 401 <em>Unauthorized</em>.</p>
+</div>
+<h4 id="global-vs-service">Global vs. Service<a class="headerlink" href="#global-vs-service" title="Permanent link">&para;</a></h4>
+<p>It is also possible to configure both global token-based access at the same
+time as service token-based access. However, there are some important details
+of which to be aware when doing so.</p>
+<ul>
+<li>When combining global and service token configurations, only the global
+token key is respected. Otherwise tokens would always be invalid either at
+the global or service scope since a token is signed by a single key.</li>
+<li>The global <code>valid</code> list grants access globally but can be overridden by
+including a token in a service's <code>invalid</code> list.</li>
+<li>The global <code>invalid</code> list restricts access globally and cannot be overridden
+by including a token in a service's <code>valid</code> list.</li>
+</ul>
 <h3 id="embedded-configuration">Embedded Configuration<a class="headerlink" href="#embedded-configuration" title="Permanent link">&para;</a></h3>
 <p>If <code>libStorage</code> is embedded into another application, such as
 <a href="https://github.com/codedellemc/rexray"><code>REX-Ray</code></a>, then that application may
@@ -1299,8 +1594,58 @@ overwritten.</p>
       operations:
         mount:
           rootPath: /data
-</code></pre></div>
+</code></pre>
+
+<h3 id="rest-configuration">REST Configuration<a class="headerlink" href="#rest-configuration" title="Permanent link">&para;</a></h3>
+<p>This section reviews advanced HTTP REST configuration options:</p>
+<h4 id="parse-post-options">Parse POST Options<a class="headerlink" href="#parse-post-options" title="Permanent link">&para;</a></h4>
+<p>Normally an incoming POST request with an <code>opts</code> field does not copy the
+key/value pairs in the <code>opts</code> map into the fields that match the request's
+schema. For example, take a look at the following request:</p>
+<pre><code class="json">{
+    &quot;name&quot;: &quot;newVolume&quot;,
+    &quot;iops&quot;: 0,
+    &quot;size&quot;: 5,
+    &quot;type&quot;: &quot;block&quot;,
+    &quot;opts&quot;: {
+        &quot;encrypted&quot;: true,
+    }
+}
+</code></pre>
+
+<p>The above request is used for creating a new volume, and it appears that the
+intention is to create the volume as encrypted. However, the <code>encrypted</code> field
+is part of the free-form <code>opts</code> piece of the request. The <code>opts</code> map is for
+data that is not yet part of the official libStorage API and schema. Certain
+drivers may parse data out of the <code>opts</code> field, but it <em>is</em> driver specific.
+The libStorage server does not normally attempt to parse this field's keys
+and match it to the request's fields. A proper request would look like this:</p>
+<pre><code class="json">{
+    &quot;name&quot;:      &quot;newVolume&quot;,
+    &quot;iops&quot;:      0,
+    &quot;size&quot;:      5,
+    &quot;type&quot;:      &quot;block&quot;,
+    &quot;encrypted&quot;: true,
+}
+</code></pre>
+
+<p>In order to make things a little easier on clients, a server can be configured
+to treat the first JSON request as equal to the second. This feature is disabled
+by default due to the possibility of side-effects. For example, a value in the
+<code>opts</code> map could unintentionally overwrite the intended value if both keys are
+the same.</p>
+<p>To enable this feature, the libStorage server's configuration should set the
+<code>libstorage.server.parseRequestOpts</code> property to true. An example YAML snippet
+with this property enabled resembles the following:</p>
+<pre><code class="yaml">libstorage:
+  server:
+    parseRequestOpts: true
+</code></pre>
+
+<p>With the above property set to <code>true</code>, values in a request's <code>opts</code> map will be
+copied to the corresponding key in the request proper.</p></div>
         </div>
+        
 
         <script src="../../js/jquery-1.10.2.min.js"></script>
         <script src="../../js/bootstrap-3.0.3.min.js"></script>
@@ -1312,6 +1657,7 @@ overwritten.</p>
         <script src="../../.themes/yeti/js/highlight.pack.js"></script>
         <script src="../../.themes/yeti/js/jquery-1.10.2.min.js"></script>
         -->
+
     </body>
 
 </html>
