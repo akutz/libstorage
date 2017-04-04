@@ -325,7 +325,7 @@
                 -->
                 </li>
                 
-                <li><a href="#security-tokens">Security Tokens</a><!--
+                <li><a href="#authentication">Authentication</a><!--
                 
                 <ul class="nav nav-stacked">
                     
@@ -887,10 +887,10 @@ server certificate to have a dual purpose as an intermediate signing authority
 that has signed the allowed client certificates. Or at the very least the
 server certificate would be signed by the same intermediate CA that is used
 to sign the client-side certs.</p>
-<h3 id="security-tokens">Security Tokens<a class="headerlink" href="#security-tokens" title="Permanent link">&para;</a></h3>
+<h3 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h3>
 <p>In addition to TLS, the libStorage API includes support for
-<a href="https://jwt.io">JSON Web Tokens</a> (JWT) in order to increase security and
-decrease possible attack vectors.</p>
+<a href="https://jwt.io">JSON Web Tokens</a> (JWT) in order to provide authentication
+and authorization.</p>
 <p>A JWT is transmitted along with an API call in the standard HTTP <code>Authorization</code>
 header as an OAuth 2.0 <a href="https://tools.ietf.org/html/rfc6750">Bearer</a> token. For
 example:</p>
@@ -925,22 +925,20 @@ service. For example, the below configuration restricts all access to the
 libStorage API to the bearer token from above:</p>
 <pre><code class="yaml">libstorage:
   server:
-    tokens:
+    auth:
       key: MySuperSecretSigningKey
       alg: HS256
       allow:
       - akutz
-      deny:
-      - cduchesne
 </code></pre>
 
 <p>The above configuration snippet defines a new property,
-<code>libstorage.server.tokens</code>. This property contains three child properties:
+<code>libstorage.server.auth</code>. This property contains three child properties:
 <code>key</code>, <code>alg</code>, <code>allow</code>, <code>deny</code>, and <code>disabled</code>.</p>
-<p>The property <code>libstorage.server.tokens.key</code> is the secret key used to verify
+<p>The property <code>libstorage.server.auth.key</code> is the secret key used to verify
 the signatures of the tokens included in API calls. If the property's value
 is a valid file path then the contents of the file are used as the key. The
-value of <code>libstorage.server.tokens.alg</code> specifies the cryptographic algorithm
+value of <code>libstorage.server.auth.alg</code> specifies the cryptographic algorithm
 used to sign and verify the tokens. It has a default value of <code>HS256</code>. Valid
 algorithms include:</p>
 <table>
@@ -1014,30 +1012,28 @@ algorithms include:</p>
 </tr>
 </tbody>
 </table>
-<p>Both the properties <code>libstorage.server.tokens.allow</code> and
-<code>libstorage.server.tokens.deny</code> are arrays of strings. The values can be
+<p>Both the properties <code>libstorage.server.auth.allow</code> and
+<code>libstorage.server.auth.deny</code> are arrays of strings. The values can be
 either the subject of the token or the complete JWT. The <code>allow</code> property
 indicates which tokens are valid and the <code>deny</code> property is a way to
 explicitly revoke access.</p>
 <div class="admonition note">
 <p class="admonition-title">note</p>
 <p>Please be aware that by virtue of defining the property
-<code>libstorage.server.tokens.allow</code>, access to the server is restricted to
+<code>libstorage.server.auth.allow</code>, access to the server is restricted to
 requests with valid tokens only and anonymous access is no longer allowed.</p>
 </div>
 <p>There may be occasions when it is necessary to temporarily disable token-based
 access restrictions. It's possible to do this without removing the token
-configuration using setting the property <code>libstorage.server.tokens.disabled</code>
+configuration by setting the property <code>libstorage.server.auth.disabled</code>
 to a boolean true value:</p>
 <pre><code class="yaml">libstorage:
   server:
-    tokens:
+    auth:
       disabled: true
       key:      MySuperSecretSigningKey
       allow:
       - akutz
-      deny:
-      - cduchesne
 </code></pre>
 
 <h4 id="service-configuration">Service Configuration<a class="headerlink" href="#service-configuration" title="Permanent link">&para;</a></h4>
@@ -1048,7 +1044,7 @@ This section reviews service-level token configurations.</p>
     services:
       ebs-00:
         driver: ebs
-        tokens:
+        auth:
           key: MySuperSecretSigningKey
           allow:
           - akutz
@@ -1079,6 +1075,19 @@ including a token in a service's <code>deny</code> list.</li>
 <li>The global <code>deny</code> list restricts access globally and cannot be overridden
 by including a token in a service's <code>allow</code> list.</li>
 </ul>
+<pre><code class="yaml">libstorage:
+  server:
+    services:
+      ebs-00:
+        driver: ebs
+        auth:
+          key: MySuperSecretSigningKey
+          allow:
+          - akutz
+      ebs-01:
+        driver: ebs
+</code></pre>
+
 <h4 id="client-config">Client Config<a class="headerlink" href="#client-config" title="Permanent link">&para;</a></h4>
 <p>Up until now the discussion surrounding security tokens has been centered on
 server-side configuration. However, the libStorage client can also be
@@ -1086,26 +1095,26 @@ configured to send tokens as part of its standard API call workflow. For
 example:</p>
 <pre><code>libstorage:
   client:
-    tokens:
-      enabled: akutz
-      encoded:
-        akutz: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2ODg1NTAsImlhdCI6MTQ5MTIzODk1MCwibmJmIjoxNDkxMjM4OTUwLCJzdWIiOiJha3V0eiJ9.3eAA7AQZUGrwA42H64qKbu8QF_AHpSsJSMR0FALnKj8
-        cduchesne: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2OTM1ODQsImlhdCI6MTQ5MTI0Mzk4NCwibmJmIjoxNDkxMjQzOTg0LCJzdWIiOiJjZHVjaGVzbmUifQ.AUOrtC41LQB5FO1NsBE357o_Zsx-lhZ-3I7v_UMsTh4
+    auth:
+      active: akutz
+      auth:
+      - akutz: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2ODg1NTAsImlhdCI6MTQ5MTIzODk1MCwibmJmIjoxNDkxMjM4OTUwLCJzdWIiOiJha3V0eiJ9.3eAA7AQZUGrwA42H64qKbu8QF_AHpSsJSMR0FALnKj8
+      - cduchesne: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2OTM1ODQsImlhdCI6MTQ5MTI0Mzk4NCwibmJmIjoxNDkxMjQzOTg0LCJzdWIiOiJjZHVjaGVzbmUifQ.AUOrtC41LQB5FO1NsBE357o_Zsx-lhZ-3I7v_UMsTh4
 </code></pre>
 
 <p>The above client-side configuration snippet defines the property
-<code>libstorage.client.tokens</code> and its two child properties <code>encoded</code> and
+<code>libstorage.client.auth</code> and its two child properties <code>encoded</code> and
 <code>enabled</code>.</p>
-<p>The <code>libstorage.client.tokens.encoded</code> property allows users to specify a list
+<p>The <code>libstorage.client.auth.encoded</code> property allows users to specify a list
 of available tokens independent of selecting the active token.</p>
-<p>The <code>libstorage.client.tokens.enabled</code> property specifies the key of token in
+<p>The <code>libstorage.client.auth.enabled</code> property specifies the key of token in
 the <code>encoded</code> map that should be treated as the <em>active</em> token -- the one that
 will be included in outgoing HTTP requests as the provided bearer token.</p>
 <div class="admonition note">
 <p class="admonition-title">note</p>
-<p>It's perfectly valid to define a map of tokens using the
-<code>libstorage.client.tokens.encoded</code> property and elect not to use any of
-them by simply omitting the <code>libstorage.client.tokens.enabled</code> property.</p>
+<p>It's perfectly valid to define a list of tokens using the
+<code>libstorage.client.auth.tokens</code> property and elect not to use any of
+them by simply omitting the <code>libstorage.client.auth.active</code> property.</p>
 </div>
 <h3 id="embedded-configuration">Embedded Configuration<a class="headerlink" href="#embedded-configuration" title="Permanent link">&para;</a></h3>
 <p>If <code>libStorage</code> is embedded into another application, such as
