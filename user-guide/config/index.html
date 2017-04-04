@@ -1066,28 +1066,41 @@ access then the call  will result in an HTTP status of 401 <em>Unauthorized</em>
 <p>It is also possible to configure both global token-based access at the same
 time as service token-based access. However, there are some important details
 of which to be aware when doing so.</p>
-<ul>
-<li>When combining global and service token configurations, only the global
+<ol>
+<li>
+<p>When combining global and service token configurations, only the global
 token key is respected. Otherwise tokens would always be invalid either at
-the global or service scope since a token is signed by a single key.</li>
-<li>The global <code>allow</code> list grants access globally but can be overridden by
-including a token in a service's <code>deny</code> list.</li>
-<li>The global <code>deny</code> list restricts access globally and cannot be overridden
-by including a token in a service's <code>allow</code> list.</li>
-</ul>
-<pre><code class="yaml">libstorage:
+the global or service scope since a token is signed by a single key.</p>
+</li>
+<li>
+<p>The global <code>allow</code> list grants access globally but can be overridden by
+including a token in a service's <code>deny</code> list.</p>
+</li>
+<li>
+<p>The global <code>deny</code> list restricts access globally and cannot be overridden
+by including a token in a service's <code>allow</code> list. For example, consider the
+following configuration snippet:</p>
+<pre><code>libstorage:
   server:
+    auth:
+      key:   MySuperSecretSigningKey
+      allow:
+      - akutz
+      deny:
+      - cduchesne
     services:
       ebs-00:
         driver: ebs
         auth:
-          key: MySuperSecretSigningKey
           allow:
-          - akutz
-      ebs-01:
-        driver: ebs
+          - cduchesne
 </code></pre>
-
+<p>The above example defines a global deny list. That means that even though
+the service <code>ebs-00</code> includes <code>cduchesne</code> in its own allow list, requests
+to service <code>ebs-00</code> with <code>cduchesne</code>'s bearer token are denied because
+that token is denied globally.</p>
+</li>
+</ol>
 <h4 id="client-config">Client Config<a class="headerlink" href="#client-config" title="Permanent link">&para;</a></h4>
 <p>Up until now the discussion surrounding security tokens has been centered on
 server-side configuration. However, the libStorage client can also be
