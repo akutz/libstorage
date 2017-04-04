@@ -335,6 +335,8 @@
                     
                     <li><a href="#global-vs-service">Global vs. Service</a></li>
                     
+                    <li><a href="#client-config">Client Config</a></li>
+                    
                 </ul>
                 -->
                 </li>
@@ -925,6 +927,7 @@ libStorage API to the bearer token from above:</p>
   server:
     tokens:
       key: MySuperSecretSigningKey
+      alg: HS256
       allow:
       - akutz
       deny:
@@ -933,10 +936,84 @@ libStorage API to the bearer token from above:</p>
 
 <p>The above configuration snippet defines a new property,
 <code>libstorage.server.tokens</code>. This property contains three child properties:
-<code>key</code>, <code>allow</code>, and <code>deny</code>.</p>
+<code>key</code>, <code>alg</code>, <code>allow</code>, <code>deny</code>, and <code>disabled</code>.</p>
 <p>The property <code>libstorage.server.tokens.key</code> is the secret key used to verify
 the signatures of the tokens included in API calls. If the property's value
-is a valid file path then the contents of the file are used as the key.</p>
+is a valid file path then the contents of the file are used as the key. The
+value of <code>libstorage.server.tokens.alg</code> specifies the cryptographic algorithm
+used to sign and verify the tokens. It has a default value of <code>HS256</code>. Valid
+algorithms include:</p>
+<table>
+<thead>
+<tr>
+<th>Algorithm</th>
+<th>Strength</th>
+<th>Config Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://en.wikipedia.org/wiki/Elliptic_Curve_Digital_Signature_Algorithm">ECDSA</a></td>
+<td>256</td>
+<td><code>ES256</code></td>
+</tr>
+<tr>
+<td></td>
+<td>384</td>
+<td><code>ES384</code></td>
+</tr>
+<tr>
+<td></td>
+<td>512</td>
+<td><code>ES512</code></td>
+</tr>
+<tr>
+<td><a href="https://en.wikipedia.org/wiki/Hash-based_message_authentication_code">HMAC</a></td>
+<td>256</td>
+<td><code>HS256</code></td>
+</tr>
+<tr>
+<td></td>
+<td>384</td>
+<td><code>HS384</code></td>
+</tr>
+<tr>
+<td></td>
+<td>512</td>
+<td><code>HS512</code></td>
+</tr>
+<tr>
+<td><a href="http://www.emc.com/emc-plus/rsa-labs/historical/raising-standard-rsa-signatures-rsa-pss.htm">RSA-PSS</a></td>
+<td>256</td>
+<td><code>PS256</code></td>
+</tr>
+<tr>
+<td></td>
+<td>384</td>
+<td><code>PS384</code></td>
+</tr>
+<tr>
+<td></td>
+<td>512</td>
+<td><code>PS512</code></td>
+</tr>
+<tr>
+<td><a href="https://en.wikipedia.org/wiki/RSA_(cryptosystem)">RSA</a></td>
+<td>256</td>
+<td><code>RS256</code></td>
+</tr>
+<tr>
+<td></td>
+<td>384</td>
+<td><code>RS384</code></td>
+</tr>
+<tr>
+<td></td>
+<td>512</td>
+<td><code>RS512</code></td>
+</tr>
+</tbody>
+</table>
 <p>Both the properties <code>libstorage.server.tokens.allow</code> and
 <code>libstorage.server.tokens.deny</code> are arrays of strings. The values can be
 either the subject of the token or the complete JWT. The <code>allow</code> property
@@ -945,7 +1022,7 @@ explicitly revoke access.</p>
 <div class="admonition note">
 <p class="admonition-title">note</p>
 <p>Please be aware that by virtue of defining the property
-<code>libstorage.server.tokens</code> access to the server is restricted to
+<code>libstorage.server.tokens.allow</code>, access to the server is restricted to
 requests with valid tokens only and anonymous access is no longer allowed.</p>
 </div>
 <p>There may be occasions when it is necessary to temporarily disable token-based
@@ -1002,6 +1079,34 @@ including a token in a service's <code>deny</code> list.</li>
 <li>The global <code>deny</code> list restricts access globally and cannot be overridden
 by including a token in a service's <code>allow</code> list.</li>
 </ul>
+<h4 id="client-config">Client Config<a class="headerlink" href="#client-config" title="Permanent link">&para;</a></h4>
+<p>Up until now the discussion surrounding security tokens has been centered on
+server-side configuration. However, the libStorage client can also be
+configured to send tokens as part of its standard API call workflow. For
+example:</p>
+<pre><code>libstorage:
+  client:
+    tokens:
+      enabled: akutz
+      encoded:
+        akutz: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2ODg1NTAsImlhdCI6MTQ5MTIzODk1MCwibmJmIjoxNDkxMjM4OTUwLCJzdWIiOiJha3V0eiJ9.3eAA7AQZUGrwA42H64qKbu8QF_AHpSsJSMR0FALnKj8
+        cduchesne: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE1MjI2OTM1ODQsImlhdCI6MTQ5MTI0Mzk4NCwibmJmIjoxNDkxMjQzOTg0LCJzdWIiOiJjZHVjaGVzbmUifQ.AUOrtC41LQB5FO1NsBE357o_Zsx-lhZ-3I7v_UMsTh4
+</code></pre>
+
+<p>The above client-side configuration snippet defines the property
+<code>libstorage.client.tokens</code> and its two child properties <code>encoded</code> and
+<code>enabled</code>.</p>
+<p>The <code>libstorage.client.tokens.encoded</code> property allows users to specify a list
+of available tokens independent of selecting the active token.</p>
+<p>The <code>libstorage.client.tokens.enabled</code> property specifies the key of token in
+the <code>encoded</code> map that should be treated as the <em>active</em> token -- the one that
+will be included in outgoing HTTP requests as the provided bearer token.</p>
+<div class="admonition note">
+<p class="admonition-title">note</p>
+<p>It's perfectly valid to define a map of tokens using the
+<code>libstorage.client.tokens.encoded</code> property and elect not to use any of
+them by simply omitting the <code>libstorage.client.tokens.enabled</code> property.</p>
+</div>
 <h3 id="embedded-configuration">Embedded Configuration<a class="headerlink" href="#embedded-configuration" title="Permanent link">&para;</a></h3>
 <p>If <code>libStorage</code> is embedded into another application, such as
 <a href="https://github.com/codedellemc/rexray"><code>REX-Ray</code></a>, then that application may
