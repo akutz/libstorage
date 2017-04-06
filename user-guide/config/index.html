@@ -1117,6 +1117,9 @@ example:</p>
 <p>The above client-side configuration snippet defines the property
 <code>libstorage.client.auth.token</code>, the JWT used for outgoing HTTP calls as
 the bearer token.</p>
+<p>The value of the <code>libstorage.client.auth.token</code> property can also be a valid
+file path. The contents of the file will be read from disk and treated as the
+encoded token string.</p>
 <h3 id="embedded-configuration">Embedded Configuration<a class="headerlink" href="#embedded-configuration" title="Permanent link">&para;</a></h3>
 <p>If <code>libStorage</code> is embedded into another application, such as
 <a href="https://github.com/codedellemc/rexray"><code>REX-Ray</code></a>, then that application may
