@@ -1013,10 +1013,12 @@ algorithms include:</p>
 </tbody>
 </table>
 <p>Both the properties <code>libstorage.server.auth.allow</code> and
-<code>libstorage.server.auth.deny</code> are arrays of strings. The values can be
-either the subject of the token or the complete JWT. The <code>allow</code> property
-indicates which tokens are valid and the <code>deny</code> property is a way to
-explicitly revoke access.</p>
+<code>libstorage.server.auth.deny</code> are arrays of strings.</p>
+<p>The values can be either the subject of the token, the entire, encoded JWT, or
+the format <code>tag:encodedJWT</code>. The prefix <code>tag:</code> can be any piece of text in
+order to provide a friendly means of identifying the encoded JWT.</p>
+<p>The <code>allow</code> property indicates which tokens are valid and the <code>deny</code> property
+is a way to explicitly revoke access.</p>
 <div class="admonition note">
 <p class="admonition-title">note</p>
 <p>Please be aware that by virtue of defining the property
